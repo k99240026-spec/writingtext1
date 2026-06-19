@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>글쓰기 수행평가 | 독서와 사고</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','맑은 고딕',AppleSDGothicNeo,sans-serif;background:#f0f4f8;color:#1e293b;min-height:100vh}
+input,textarea,select,button{font-family:inherit}
+
+/* === NAV === */
+.top-nav{
+  position:fixed;top:0;right:0;z-index:200;
+  display:flex;
+  background:#fff;
+  border-bottom-left-radius:10px;
+  box-shadow:0 2px 10px rgba(0,0,0,.15);
+  overflow:hidden;
+}
+.nav-btn{
+  padding:10px 18px;border:none;cursor:pointer;
+  font-size:13px;font-weight:600;
+  transition:all .2s;white-space:nowrap;
+}
+.nav-btn.active{background:#1d4ed8;color:#fff}
+.nav-btn:not(.active){background:#fff;color:#6b7280}
+.nav-btn:not(.active):hover{background:#f3f4f6}
+
+/* === VIEWS === */
+.view{display:none;min-height:100vh}
+.view.active{display:block}
+#view-write{display:none;flex-direction:column;height:100vh;overflow:hidden}
+#view-write.active{display:flex}
+
+/* === CONTAINER === */
+.container{max-width:860px;margin:0 auto;padding:20px 16px 40px}
+.container.padtop{padding-top:68px}
+
+/* === CARD === */
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.09);padding:24px;margin-bottom:16px}
+
+/* === REGISTRATION === */
+.subject-tag{text-align:center;font-size:12px;color:#6b7280;margin-bottom:4px;letter-spacing:.05em;text-transform:uppercase}
+.page-title{text-align:center;font-size:22px;font-weight:800;color:#1e293b;margin-bottom:20px}
+
+.info-box{background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:18px;margin-bottom:14px}
+.info-box h3{font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:10px}
+.info-row{font-size:14px;color:#1e40af;margin-bottom:5px;padding-left:4px;line-height:1.6}
+
+.warn-box{background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:18px;margin-bottom:20px}
+.warn-box h3{font-size:14px;font-weight:700;color:#c2410c;margin-bottom:10px}
+.warn-item{font-size:14px;color:#9a3412;margin-bottom:6px;padding-left:4px;line-height:1.6}
+.warn-item::before{content:'⚠ ';font-style:normal}
+
+.form-row{margin-bottom:14px}
+.form-label{display:block;font-size:14px;font-weight:600;color:#374151;margin-bottom:6px}
+.form-control{
+  width:100%;padding:11px 14px;
+  border:1.5px solid #d1d5db;border-radius:8px;
+  font-size:15px;color:#1e293b;background:#fff;
+  transition:border-color .2s,box-shadow .2s;
+}
+.form-control:focus{outline:none;border-color:#1d4ed8;box-shadow:0 0 0 3px rgba(29,78,216,.1)}
+select.form-control{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+
+.btn-start{
+  width:100%;padding:15px;margin-top:4px;
+  background:#1d4ed8;color:#fff;
+  border:none;border-radius:10px;
+  font-size:16px;font-weight:700;
+  cursor:pointer;transition:background .2s,transform .1s;
+  letter-spacing:.02em;
+}
+.btn-start:hover{background:#1e40af;transform:translateY(-1px)}
+.btn-start:active{transform:translateY(0)}
+
+/* === WRITING VIEW === */
+.writing-top{
+  flex-shrink:0;
+  padding:8px 16px 0;
+  background:#fff;
+  border-bottom:1.5px solid #e2e8f0;
+  padding-top:52px;
+}
+.title-input{
+  width:100%;font-size:19px;font-weight:700;
+  border:none;outline:none;
+  border-bottom:2px solid #e5e7eb;
+  padding:6px 2px 10px;margin-bottom:8px;
+  background:transparent;color:#1e293b;
+  transition:border-color .2s;
+}
+.title-input:focus{border-bottom-color:#1d4ed8}
+.title-input::placeholder{color:#9ca3af;font-weight:400}
+.writing-meta{font-size:13px;color:#6b7280;padding:4px 2px 8px;display:flex;gap:16px}
+.writing-meta span{display:flex;align-items:center;gap:4px}
+
+.writing-body{flex:1;overflow:hidden;padding:8px 16px 0}
+.essay-area{
+  width:100%;height:100%;
+  border:1.5px solid #e2e8f0;border-radius:10px 10px 0 0;
+  padding:16px 18px;font-size:15px;line-height:2;
+  resize:none;outline:none;color:#1e293b;background:#fafafa;
+  transition:border-color .2s,background .2s;
+  display:block;
+}
+.essay-area:focus{border-color:#1d4ed8;background:#fff}
+.essay-area::placeholder{color:#9ca3af}
+
+.writing-footer{
+  flex-shrink:0;
+  padding:10px 16px;background:#fff;
+  border-top:1.5px solid #e2e8f0;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.char-info{min-width:220px}
+.char-label{font-size:14px;font-weight:600}
+.char-label.ok{color:#15803d}
+.char-label.under{color:#d97706}
+.char-label.over{color:#dc2626}
+.char-bar-bg{height:5px;background:#e5e7eb;border-radius:3px;margin-top:5px;width:220px}
+.char-bar-fill{height:5px;border-radius:3px;transition:width .3s,background .3s}
+.time-info{font-size:14px;color:#475569;font-weight:500;flex:1}
+.save-info{font-size:12px;color:#9ca3af;text-align:center}
+.btn-submit-final{
+  padding:10px 22px;background:#059669;color:#fff;
+  border:none;border-radius:8px;font-size:14px;font-weight:700;
+  cursor:pointer;transition:background .2s,opacity .2s;white-space:nowrap;
+}
+.btn-submit-final:hover{background:#047857}
+.btn-submit-final:disabled{background:#9ca3af;cursor:not-allowed;opacity:.7}
+
+/* === TEACHER LOGIN === */
+#view-teacher-login .container{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh}
+.login-wrap{width:100%;max-width:360px}
+.login-wrap h2{font-size:18px;font-weight:800;margin-bottom:6px;text-align:center}
+.login-wrap p{font-size:13px;color:#6b7280;text-align:center;margin-bottom:24px}
+.btn-login{width:100%;padding:12px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;transition:background .2s}
+.btn-login:hover{background:#1e40af}
+
+/* === TEACHER DASHBOARD === */
+.dash-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.dash-title{font-size:18px;font-weight:800;color:#1e293b}
+.live-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#059669;font-weight:600}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#059669;animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+.class-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tab-btn{
+  padding:6px 14px;border:1.5px solid #d1d5db;border-radius:20px;
+  background:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.tab-btn.active{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+.tab-btn:not(.active):hover{background:#f3f4f6}
+
+.table-wrap{overflow-x:auto}
+table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
+.stu-table th{background:#f8fafc;padding:10px 12px;text-align:left;font-weight:700;color:#475569;border-bottom:2px solid #e2e8f0;white-space:nowrap}
+.stu-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+.stu-table tbody tr:hover td{background:#f8fafc}
+.name-link{color:#1d4ed8;cursor:pointer;font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.02em}
+.badge-done{background:#dcfce7;color:#15803d}
+.badge-wip{background:#fef3c7;color:#92400e}
+.badge-none{background:#f1f5f9;color:#6b7280}
+
+/* Settings */
+.section-title{font-size:15px;font-weight:800;color:#1e293b;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #e2e8f0}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.btn-save-settings{padding:10px 20px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s}
+.btn-save-settings:hover{background:#1e40af}
+
+/* === STUDENT DETAIL === */
+.btn-back{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:16px;transition:all .2s;color:#374151}
+.btn-back:hover{background:#f3f4f6}
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-bottom:0}
+.meta-cell span{font-size:11px;color:#9ca3af;font-weight:600;letter-spacing:.05em;text-transform:uppercase;display:block;margin-bottom:4px}
+.meta-cell div{font-size:15px;font-weight:700;color:#1e293b}
+
+.essay-display{
+  white-space:pre-wrap;font-size:15px;line-height:2;
+  padding:20px;background:#fafafa;border:1.5px solid #e2e8f0;border-radius:10px;
+  min-height:200px;user-select:text;cursor:text;color:#1e293b;
+}
+.paste-item{
+  padding:10px 14px;background:#fff7ed;border-left:3px solid #f97316;
+  border-radius:0 8px 8px 0;margin-bottom:8px;font-size:13px;color:#9a3412;
+}
+
+/* === TOAST === */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:#1e293b;color:#fff;padding:12px 22px;
+  border-radius:10px;font-size:14px;font-weight:500;
+  z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25);
+  animation:toastIn .3s ease;pointer-events:none;
+  white-space:nowrap;
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* === RESPONSIVE === */
+@media(max-width:600px){
+  .settings-grid{grid-template-columns:1fr}
+  .stu-table th,.stu-table td{padding:8px}
+  .writing-footer{gap:8px}
+  .char-bar-bg{width:160px}
+  .char-info{min-width:160px}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV (모든 화면 우측 상단 고정) -->
+<div class="top-nav">
+  <button class="nav-btn active" id="nav-stu" onclick="goStudent()">학생 화면</button>
+  <button class="nav-btn" id="nav-tea" onclick="goTeacher()">교사 확인</button>
+</div>
+
+<!-- ========== VIEW 1: 학생 등록 ========== -->
+<div class="view active" id="view-reg">
+  <div class="container padtop">
+    <p class="subject-tag">과목: 독서와 사고</p>
+    <h1 class="page-title">글쓰기 수행평가 안내</h1>
+
+    <div class="info-box">
+      <h3>📋 과제 안내</h3>
+      <p class="info-row" id="lbl-topic">• 주제: 행복이란 무엇인가</p>
+      <p class="info-row" id="lbl-length">• 분량: 띄어쓰기 포함 1500자 내외 (최소 1300자, 최대 1800자)</p>
+      <p class="info-row" id="lbl-time">• 제한 시간: 100분</p>
+    </div>
+
+    <div class="warn-box">
+      <h3>주의 사항</h3>
+      <p class="warn-item">생성형 AI를 활용하여 작성할 경우 최하점을 부여함.</p>
+      <p class="warn-item">글쓰기 과정에서 복사하기, 붙여넣기 금지함.</p>
+    </div>
+
+    <div class="card">
+      <div class="form-row">
+        <label class="form-label">분반</label>
+        <select class="form-control" id="inp-class">
+          <option value="">분반을 선택하세요</option>
+          <option value="1">1반</option>
+          <option value="2">2반</option>
+          <option value="3">3반</option>
+          <option value="4">4반</option>
+          <option value="5">5반</option>
+          <option value="6">6반</option>
+          <option value="7">7반</option>
+          <option value="8">8반</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">학번</label>
+        <input class="form-control" id="inp-sid" type="text" placeholder="학번을 입력하세요" maxlength="20">
+      </div>
+      <div class="form-row">
+        <label class="form-label">이름</label>
+        <input class="form-control" id="inp-name" type="text" placeholder="이름을 입력하세요" maxlength="10">
+      </div>
+      <button class="btn-start" onclick="startWriting()">글쓰기 시작</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== VIEW 2: 글쓰기 ========== -->
+<div class="view" id="view-write">
+  <div class="writing-top">
+    <input class="title-input" id="essay-title" type="text" placeholder="제목을 입력하세요">
+    <div class="writing-meta" id="writing-meta">
+      <span>반: -</span><span>학번: -</span><span>이름: -</span>
+    </div>
+  </div>
+  <div class="writing-body">
+    <textarea class="essay-area" id="essay-body" placeholder="본문을 작성하세요..."></textarea>
+  </div>
+  <div class="writing-footer">
+    <div class="char-info">
+      <div class="char-label under" id="char-label">0자</div>
+      <div class="char-bar-bg"><div class="char-bar-fill" id="char-bar" style="width:0%;background:#d97706"></div></div>
+    </div>
+    <div class="time-info" id="time-display">경과 시간: 00:00</div>
+    <div class="save-info" id="save-info">자동 저장 대기 중</div>
+    <button class="btn-submit-final" id="btn-submit" onclick="finalSubmit()">최종 제출하기</button>
+  </div>
+</div>
+
+<!-- ========== VIEW 3: 교사 로그인 ========== -->
+<div class="view" id="view-teacher-login">
+  <div class="container">
+    <div class="login-wrap card">
+      <h2>🔒 교사 확인 페이지</h2>
+      <p>비밀번호를 입력하세요</p>
+      <div class="form-row">
+        <label class="form-label">비밀번호</label>
+        <input class="form-control" id="teacher-pw" type="password" placeholder="비밀번호" onkeydown="if(event.key==='Enter')teacherLogin()">
+      </div>
+      <button class="btn-login" onclick="teacherLogin()">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== VIEW 4: 교사 대시보드 ========== -->
+<div class="view" id="view-dash">
+  <div class="container padtop">
+
+    <div class="dash-header">
+      <span class="dash-title">교사 확인 대시보드</span>
+      <span class="live-badge"><span class="live-dot"></span>실시간 업데이트 중</span>
+    </div>
+
+    <!-- 반 탭 -->
+    <div class="class-tabs" id="class-tabs">
+      <button class="tab-btn active" onclick="selectClass('all')">전체</button>
+      <button class="tab-btn" onclick="selectClass('1')">1반</button>
+      <button class="tab-btn" onclick="selectClass('2')">2반</button>
+      <button class="tab-btn" onclick="selectClass('3')">3반</button>
+      <button class="tab-btn" onclick="selectClass('4')">4반</button>
+      <button class="tab-btn" onclick="selectClass('5')">5반</button>
+      <button class="tab-btn" onclick="selectClass('6')">6반</button>
+      <button class="tab-btn" onclick="selectClass('7')">7반</button>
+      <button class="tab-btn" onclick="selectClass('8')">8반</button>
+    </div>
+
+    <!-- 학생 목록 -->
+    <div class="card">
+      <div class="table-wrap">
+        <table class="stu-table">
+          <thead>
+            <tr>
+              <th>반</th>
+              <th>이름</th>
+              <th>학번</th>
+              <th>글자수</th>
+              <th>작성 시간</th>
+              <th>제출 완료 시간 (KST)</th>
+              <th>상태</th>
+            </tr>
+          </thead>
+          <tbody id="stu-tbody">
+            <tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:28px">아직 접속한 학생이 없습니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 설정 -->
+    <div class="card">
+      <h3 class="section-title">설정 관리 (교사 전용)</h3>
+      <div class="settings-grid">
+        <div class="form-row">
+          <label class="form-label">글쓰기 주제</label>
+          <input class="form-control" id="set-topic" type="text" value="행복이란 무엇인가">
+        </div>
+        <div class="form-row">
+          <label class="form-label">제한 시간 (분)</label>
+          <input class="form-control" id="set-time" type="number" value="100" min="1" max="300">
+        </div>
+        <div class="form-row">
+          <label class="form-label">최소 글자수</label>
+          <input class="form-control" id="set-min" type="number" value="1300" min="0">
+        </div>
+        <div class="form-row">
+          <label class="form-label">최대 글자수</label>
+          <input class="form-control" id="set-max" type="number" value="1800" min="0">
+        </div>
+      </div>
+      <button class="btn-save-settings" onclick="saveSettings()">설정 저장</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========== VIEW 5: 학생 상세 (교사) ========== -->
+<div class="view" id="view-detail">
+  <div class="container padtop">
+    <button class="btn-back" onclick="backToDash()">← 목록으로 돌아가기</button>
+
+    <div class="card">
+      <h3 class="section-title" id="detail-heading">학생 상세 정보</h3>
+      <div class="meta-grid">
+        <div class="meta-cell"><span>반</span><div id="d-class">-</div></div>
+        <div class="meta-cell"><span>학번</span><div id="d-sid">-</div></div>
+        <div class="meta-cell"><span>이름</span><div id="d-name">-</div></div>
+        <div class="meta-cell"><span>글자수</span><div id="d-chars">-</div></div>
+        <div class="meta-cell"><span>작성 시간</span><div id="d-wtime">-</div></div>
+        <div class="meta-cell"><span>제출 시간 (KST)</span><div id="d-subtime">-</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+        <h3 class="section-title" style="border:none;margin:0;padding:0">작성 내용</h3>
+        <span class="live-badge" id="detail-live"><span class="live-dot"></span>실시간 모니터링 중</span>
+      </div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:12px;color:#1e293b" id="d-essay-title"></div>
+      <div class="essay-display" id="d-essay-body" style="user-select:text"></div>
+      <p style="font-size:12px;color:#9ca3af;margin-top:8px">※ 위 내용은 자유롭게 드래그하여 복사하실 수 있습니다.</p>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title">붙여넣기 시도 기록</h3>
+      <div id="paste-log">
+        <p style="font-size:14px;color:#9ca3af">붙여넣기 시도 기록이 없습니다.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========== SCRIPT ========== -->
+<script>
+// ─── 전역 상태 ───────────────────────────────────────────────────────────────
+const TEACHER_PW = '1124';
+
+let state = {
+  currentView: 'reg',
+  student: null,       // { class, studentId, name }
+  startTime: null,
+  submitted: false,
+  pasteLog: [],
+  settings: { topic: '행복이란 무엇인가', timeLimit: 100, minChars: 1300, maxChars: 1800 },
+  timerId: null,
+  autoSaveId: null,
+  teacherPollId: null,
+  detailPollId: null,
+  teacherClass: 'all',
+  selectedKey: null,
+};
+
+// ─── 화면 전환 ───────────────────────────────────────────────────────────────
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  state.currentView = id;
+
+  const isTeacher = ['teacher-login','dash','detail'].includes(id);
+  document.getElementById('nav-stu').classList.toggle('active', !isTeacher);
+  document.getElementById('nav-tea').classList.toggle('active', isTeacher);
+}
+
+function goStudent() {
+  stopTeacherPolling();
+  if (state.submitted || !state.student) {
+    showView('reg');
+  } else if (state.student) {
+    showView('write');
+  } else {
+    showView('reg');
+  }
+}
+
+function goTeacher() {
+  if (['teacher-login','dash','detail'].includes(state.currentView)) return;
+  showView('teacher-login');
+  setTimeout(() => document.getElementById('teacher-pw').focus(), 50);
+}
+
+// ─── 초기화 ──────────────────────────────────────────────────────────────────
+async function init() {
+  await loadSettings();
+  showView('reg');
+}
+
+async function loadSettings() {
+  try {
+    const r = await fetch('/api/settings');
+    if (r.ok) {
+      state.settings = await r.json();
+      applySettingsDisplay();
+    }
+  } catch(e) { /* 기본값 사용 */ }
+}
+
+function applySettingsDisplay() {
+  const s = state.settings;
+  document.getElementById('lbl-topic').textContent  = `• 주제: ${s.topic}`;
+  document.getElementById('lbl-length').textContent = `• 분량: 띄어쓰기 포함 ${s.targetChars || Math.round((s.minChars+s.maxChars)/2)}자 내외 (최소 ${s.minChars}자, 최대 ${s.maxChars}자)`;
+  document.getElementById('lbl-time').textContent   = `• 제한 시간: ${s.timeLimit}분`;
+}
+
+// ─── 학생 등록 → 글쓰기 시작 ────────────────────────────────────────────────
+async function startWriting() {
+  const cls  = document.getElementById('inp-class').value;
+  const sid  = document.getElementById('inp-sid').value.trim();
+  const name = document.getElementById('inp-name').value.trim();
+
+  if (!cls)  return toast('분반을 선택해주세요.');
+  if (!sid)  return toast('학번을 입력해주세요.');
+  if (!name) return toast('이름을 입력해주세요.');
+
+  state.student   = { class: cls, studentId: sid, name };
+  state.startTime = Date.now();
+  state.submitted = false;
+  state.pasteLog  = [];
+
+  document.getElementById('writing-meta').innerHTML =
+    `<span>${cls}반</span><span>학번: ${sid}</span><span>이름: ${name}</span>`;
+
+  showView('write');
+  initTextarea();
+  startTimer();
+  startAutoSave();
+
+  // 기존 초안 불러오기
+  try {
+    const key = makeKey(state.student);
+    const r = await fetch(`/api/get?key=${encodeURIComponent(key)}`);
+    if (r.ok) {
+      const data = await r.json();
+      if (data && data.content) {
+        document.getElementById('essay-title').value = data.title || '';
+        document.getElementById('essay-body').value  = data.content || '';
+        state.pasteLog = data.pasteLog || [];
+        updateCharCount();
+      }
+    }
+  } catch(e) {}
+}
+
+function makeKey(s) {
+  return `student_${s.class}_${s.studentId}_${s.name}`;
+}
+
+// ─── 글쓰기 영역 설정 ────────────────────────────────────────────────────────
+function initTextarea() {
+  const ta = document.getElementById('essay-body');
+
+  // 이벤트 중복 방지
+  const newTa = ta.cloneNode(true);
+  ta.parentNode.replaceChild(newTa, ta);
+
+  newTa.addEventListener('input', updateCharCount);
+
+  // 붙여넣기 차단 + 기록
+  newTa.addEventListener('paste', e => {
+    e.preventDefault();
+    const entry = { timestamp: new Date().toISOString(), kstTime: toKST(new Date()) };
+    state.pasteLog.push(entry);
+    toast('⚠️ 붙여넣기는 금지되어 있습니다. 시도가 기록됩니다.');
+    doSave(); // 즉시 저장하여 교사에게 전달
+  });
+
+  // 드래그 앤 드롭 차단
+  newTa.addEventListener('drop', e => {
+    e.preventDefault();
+    toast('⚠️ 드래그 앤 드롭 입력은 금지되어 있습니다.');
+  });
+
+  // 우클릭 메뉴 차단 (붙여넣기 방지)
+  newTa.addEventListener('contextmenu', e => e.preventDefault());
+
+  document.getElementById('essay-title').addEventListener('input', updateCharCount);
+  updateCharCount();
+}
+
+function updateCharCount() {
+  const content = document.getElementById('essay-body').value;
+  const cnt = content.length;
+  const min = state.settings.minChars || 1300;
+  const max = state.settings.maxChars || 1800;
+
+  const lbl = document.getElementById('char-label');
+  const bar = document.getElementById('char-bar');
+
+  lbl.textContent = `${cnt.toLocaleString()}자 (최소 ${min.toLocaleString()}자 ~ 최대 ${max.toLocaleString()}자)`;
+
+  if (cnt >= min && cnt <= max) {
+    lbl.className = 'char-label ok';
+    bar.style.background = '#15803d';
+  } else if (cnt < min) {
+    lbl.className = 'char-label under';
+    bar.style.background = '#d97706';
+  } else {
+    lbl.className = 'char-label over';
+    bar.style.background = '#dc2626';
+  }
+
+  bar.style.width = Math.min((cnt / max) * 100, 100) + '%';
+}
+
+// ─── 타이머 ──────────────────────────────────────────────────────────────────
+function startTimer() {
+  clearInterval(state.timerId);
+  state.timerId = setInterval(() => {
+    const sec = Math.floor((Date.now() - state.startTime) / 1000);
+    const m = String(Math.floor(sec / 60)).padStart(2,'0');
+    const s = String(sec % 60).padStart(2,'0');
+    document.getElementById('time-display').textContent = `경과 시간: ${m}:${s}`;
+
+    const limitSec = (state.settings.timeLimit || 100) * 60;
+    const remaining = limitSec - sec;
+
+    if (remaining <= 0 && !state.submitted) {
+      toast('⏰ 제한 시간이 종료되었습니다. 자동 제출됩니다.');
+      finalSubmit(true);
+    } else if (remaining === 600) {
+      toast('⏰ 제한 시간이 10분 남았습니다.');
+    } else if (remaining === 300) {
+      toast('⏰ 제한 시간이 5분 남았습니다.');
+    }
+  }, 1000);
+}
+
+// ─── 자동 저장 ───────────────────────────────────────────────────────────────
+function startAutoSave() {
+  clearInterval(state.autoSaveId);
+  state.autoSaveId = setInterval(doSave, 10000);
+}
+
+async function doSave() {
+  if (!state.student) return;
+  const payload = buildPayload();
+  try {
+    document.getElementById('save-info').textContent = '저장 중...';
+    await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    document.getElementById('save-info').textContent = `자동 저장: ${toKST(new Date())}`;
+  } catch(e) {
+    document.getElementById('save-info').textContent = '저장 실패 (네트워크 오류)';
+  }
+}
+
+function buildPayload() {
+  return {
+    ...state.student,
+    title: document.getElementById('essay-title').value,
+    content: document.getElementById('essay-body').value,
+    writingTime: Math.floor((Date.now() - state.startTime) / 1000),
+    pasteLog: state.pasteLog,
+    startTime: new Date(state.startTime).toISOString(),
+  };
+}
+
+// ─── 최종 제출 ───────────────────────────────────────────────────────────────
+async function finalSubmit(auto) {
+  if (state.submitted) return;
+
+  const content = document.getElementById('essay-body').value;
+  const cnt = content.length;
+  const min = state.settings.minChars || 1300;
+  const max = state.settings.maxChars || 1800;
+
+  if (!auto) {
+    if (cnt < min && !confirm(`현재 ${cnt}자로 최소 글자수(${min}자)에 미치지 못합니다.\n그래도 제출하시겠습니까?`)) return;
+    if (cnt > max && !confirm(`현재 ${cnt}자로 최대 글자수(${max}자)를 초과합니다.\n그래도 제출하시겠습니까?`)) return;
+    if (!confirm('최종 제출하시겠습니까?\n제출 후에는 수정이 불가합니다.')) return;
+  }
+
+  state.submitted = true;
+  const payload = { ...buildPayload() };
+
+  try {
+    await fetch('/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    clearInterval(state.timerId);
+    clearInterval(state.autoSaveId);
+
+    document.getElementById('btn-submit').disabled = true;
+    document.getElementById('btn-submit').textContent = '✓ 제출 완료';
+    document.getElementById('essay-body').disabled = true;
+    document.getElementById('essay-title').disabled = true;
+    document.getElementById('save-info').textContent = '✓ 최종 제출 완료';
+
+    toast('✅ 최종 제출이 완료되었습니다. 수고하셨습니다!');
+  } catch(e) {
+    state.submitted = false;
+    toast('❌ 제출 중 오류가 발생했습니다. 다시 시도해주세요.');
+  }
+}
+
+// ─── 교사 로그인 ─────────────────────────────────────────────────────────────
+function teacherLogin() {
+  const pw = document.getElementById('teacher-pw').value;
+  if (pw === TEACHER_PW) {
+    document.getElementById('teacher-pw').value = '';
+    showView('dash');
+    loadTeacherSettings();
+    startTeacherPolling();
+  } else {
+    toast('비밀번호가 올바르지 않습니다.');
+    document.getElementById('teacher-pw').value = '';
+  }
+}
+
+// ─── 교사 대시보드 ───────────────────────────────────────────────────────────
+function startTeacherPolling() {
+  fetchStudents();
+  state.teacherPollId = setInterval(fetchStudents, 5000);
+}
+
+function stopTeacherPolling() {
+  clearInterval(state.teacherPollId);
+  clearInterval(state.detailPollId);
+}
+
+async function fetchStudents() {
+  try {
+    const cls = state.teacherClass === 'all' ? '' : state.teacherClass;
+    const url = cls ? `/api/list?class=${cls}` : '/api/list';
+    const r = await fetch(url);
+    if (r.ok) renderTable(await r.json());
+  } catch(e) {}
+}
+
+function renderTable(students) {
+  const tbody = document.getElementById('stu-tbody');
+  if (!students || !students.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:28px">아직 접속한 학생이 없습니다.</td></tr>';
+    return;
+  }
+  students.sort((a,b) => parseInt(a.class)-parseInt(b.class) || (a.studentId||'').localeCompare(b.studentId||''));
+
+  tbody.innerHTML = students.map(s => {
+    const wt  = fmtDuration(s.writingTime || 0);
+    const sub = s.submittedAt ? toKST(new Date(s.submittedAt)) : '-';
+    const cnt = s.charCount || 0;
+    const badge = s.submitted
+      ? '<span class="badge badge-done">제출 완료</span>'
+      : (cnt > 0 ? '<span class="badge badge-wip">작성 중</span>' : '<span class="badge badge-none">미작성</span>');
+    const key = escHtml(s.key);
+    return `<tr>
+      <td>${s.class}반</td>
+      <td><span class="name-link" onclick="viewDetail('${key}')">${escHtml(s.name)}</span></td>
+      <td>${escHtml(s.studentId)}</td>
+      <td>${cnt.toLocaleString()}자</td>
+      <td>${wt}</td>
+      <td>${sub}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function selectClass(cls) {
+  state.teacherClass = cls;
+  document.querySelectorAll('#class-tabs .tab-btn').forEach((btn, i) => {
+    const val = i === 0 ? 'all' : String(i);
+    btn.classList.toggle('active', val === cls);
+  });
+  fetchStudents();
+}
+
+// ─── 설정 저장 ───────────────────────────────────────────────────────────────
+async function loadTeacherSettings() {
+  try {
+    const r = await fetch('/api/settings');
+    if (r.ok) {
+      const s = await r.json();
+      document.getElementById('set-topic').value = s.topic || '';
+      document.getElementById('set-time').value  = s.timeLimit || 100;
+      document.getElementById('set-min').value   = s.minChars  || 1300;
+      document.getElementById('set-max').value   = s.maxChars  || 1800;
+    }
+  } catch(e) {}
+}
+
+async function saveSettings() {
+  const min = parseInt(document.getElementById('set-min').value) || 1300;
+  const max = parseInt(document.getElementById('set-max').value) || 1800;
+  const s = {
+    topic:      document.getElementById('set-topic').value.trim(),
+    timeLimit:  parseInt(document.getElementById('set-time').value) || 100,
+    minChars:   min,
+    maxChars:   max,
+    targetChars: Math.round((min + max) / 2),
+  };
+  try {
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(s),
+    });
+    state.settings = s;
+    applySettingsDisplay();
+    toast('✅ 설정이 저장되었습니다.');
+  } catch(e) {
+    toast('설정 저장 중 오류가 발생했습니다.');
+  }
+}
+
+// ─── 학생 상세 보기 ──────────────────────────────────────────────────────────
+async function viewDetail(key) {
+  state.selectedKey = key;
+  showView('detail');
+  await fetchDetail();
+  clearInterval(state.detailPollId);
+  state.detailPollId = setInterval(fetchDetail, 3000);
+}
+
+async function fetchDetail() {
+  try {
+    const r = await fetch(`/api/get?key=${encodeURIComponent(state.selectedKey)}`);
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d) return;
+
+    document.getElementById('detail-heading').textContent = `${d.name} (${d.class}반) — 상세 정보`;
+    document.getElementById('d-class').textContent   = `${d.class}반`;
+    document.getElementById('d-sid').textContent     = d.studentId;
+    document.getElementById('d-name').textContent    = d.name;
+    document.getElementById('d-chars').textContent   = `${(d.content||'').length.toLocaleString()}자`;
+    document.getElementById('d-wtime').textContent   = fmtDuration(d.writingTime || 0);
+    document.getElementById('d-subtime').textContent = d.submittedAt ? toKST(new Date(d.submittedAt)) : (d.submitted ? '제출됨' : '미제출');
+    document.getElementById('d-essay-title').textContent = d.title ? `제목: ${d.title}` : '(제목 없음)';
+    document.getElementById('d-essay-body').textContent  = d.content || '(아직 내용 없음)';
+
+    const pasteContainer = document.getElementById('paste-log');
+    if (d.pasteLog && d.pasteLog.length > 0) {
+      pasteContainer.innerHTML = d.pasteLog.map((p, i) =>
+        `<div class="paste-item">🚨 붙여넣기 시도 #${i+1} &nbsp;— &nbsp;${escHtml(p.kstTime)}</div>`
+      ).join('');
+    } else {
+      pasteContainer.innerHTML = '<p style="font-size:14px;color:#9ca3af">붙여넣기 시도 기록이 없습니다.</p>';
+    }
+  } catch(e) {}
+}
+
+function backToDash() {
+  clearInterval(state.detailPollId);
+  showView('dash');
+}
+
+// ─── 유틸 ────────────────────────────────────────────────────────────────────
+function toKST(date) {
+  return date.toLocaleString('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  });
+}
+
+function fmtDuration(sec) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (h > 0) return `${h}시간 ${m}분 ${s}초`;
+  return `${m}분 ${s}초`;
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer = null;
+function toast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.remove(), 3500);
+}
+
+// ─── 시작 ────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
