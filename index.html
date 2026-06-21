@@ -82,7 +82,7 @@ select.form-control{cursor:pointer;appearance:none;background-image:url("data:im
 
 /* 왼쪽 패널 */
 .write-left{
-  width:420px;flex-shrink:0;
+  width:520px;flex-shrink:0;
   background:#f8fafc;
   border-right:1.5px solid #e2e8f0;
   overflow:hidden;
@@ -135,7 +135,7 @@ select.form-control{cursor:pointer;appearance:none;background-image:url("data:im
 .title-input::placeholder{color:#9ca3af;font-weight:400}
 .writing-meta{font-size:12px;color:#6b7280;padding:3px 2px 8px;display:flex;gap:14px}
 
-.writing-body{flex:1;overflow:hidden;padding:10px 20px 0;max-width:1000px}
+.writing-body{flex:1;overflow:hidden;padding:10px 20px 0;max-width:880px}
 .essay-area{
   width:100%;height:100%;
   border:1.5px solid #e2e8f0;border-radius:10px 10px 0 0;
@@ -688,7 +688,7 @@ async function startWriting() {
 
   // 첫 문단 들여쓰기 즉시 적용 (기존 초안이 있으면 아래에서 덮어씀)
   const ta = document.getElementById('essay-body');
-  ta.value = '　　';
+  ta.value = '';
   ta.selectionStart = ta.selectionEnd = 2;
   updateCharCount();
 
@@ -857,7 +857,7 @@ function initTextarea() {
     e.preventDefault();
     const s = newTa.selectionStart;
     const end = newTa.selectionEnd;
-    const indent = '　　'; // 전각 공백 2칸
+    const indent = ''; // 전각 공백 1칸
     newTa.value = newTa.value.substring(0, s) + '\n' + indent + newTa.value.substring(end);
     newTa.selectionStart = newTa.selectionEnd = s + 1 + indent.length;
     updateCharCount();
