@@ -201,6 +201,17 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
 .btn-del:hover{background:#fef2f2}
 .btn-unlock{padding:3px 8px;background:#fff;border:1.5px solid #6366f1;color:#4f46e5;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;margin-left:6px}
 .btn-unlock:hover{background:#eef2ff}
+.btn-pdf{padding:7px 16px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;white-space:nowrap}
+.btn-pdf:hover{background:#1e293b}
+
+/* === 제출 완료 알림 모달 === */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center}
+.modal-box{background:#fff;border-radius:16px;padding:32px 28px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.18);text-align:center}
+.modal-icon{font-size:40px;margin-bottom:12px}
+.modal-title{font-size:18px;font-weight:800;color:#1e293b;margin-bottom:10px}
+.modal-msg{font-size:14px;color:#475569;line-height:1.7;margin-bottom:20px}
+.modal-btn{padding:12px 28px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer}
+.modal-btn:hover{background:#1e40af}
 
 /* Settings */
 .section-title{font-size:15px;font-weight:800;color:#1e293b;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #e2e8f0}
@@ -388,6 +399,16 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
   </div>
 </div>
 
+<!-- ========== 제출 완료 모달 ========== -->
+<div class="modal-overlay" id="submitted-modal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-icon">✅</div>
+    <div class="modal-title">제출이 완료된 글입니다</div>
+    <div class="modal-msg">제출이 완료되었으므로 수정할 수 없습니다.<br>수정을 하고 싶다면 선생님께 문의하세요.</div>
+    <button class="modal-btn" onclick="closeSubmittedModal()">내 글 확인하기</button>
+  </div>
+</div>
+
 <!-- ========== VIEW 4: 교사 대시보드 ========== -->
 <div class="view" id="view-dash">
   <div class="container padtop">
@@ -412,6 +433,10 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
 
     <!-- 학생 목록 -->
     <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <span style="font-size:14px;color:#6b7280">※ 이름을 클릭하면 상세 내용을 확인할 수 있습니다.</span>
+        <button class="btn-pdf" onclick="downloadPDF()">📄 현재 반 PDF 다운로드</button>
+      </div>
       <div class="table-wrap">
         <table class="stu-table">
           <thead>
@@ -617,9 +642,10 @@ async function startWriting() {
         state.pasteLog = data.pasteLog || [];
         updateCharCount();
 
-        // 제출 완료 상태면 읽기 전용 모드
+        // 제출 완료 상태면 모달 표시 후 읽기 전용
         if (data.submitted) {
           setReadOnly(true);
+          document.getElementById('submitted-modal').style.display = 'flex';
         }
       }
     }
@@ -628,6 +654,96 @@ async function startWriting() {
 
 function makeKey(s) {
   return `student_${s.class}_${s.studentId}_${s.name}`;
+}
+
+// ─── 제출 완료 모달 ──────────────────────────────────────────────────────────
+function closeSubmittedModal() {
+  document.getElementById('submitted-modal').style.display = 'none';
+}
+
+// ─── PDF 다운로드 (현재 반 전체 글) ──────────────────────────────────────────
+async function downloadPDF() {
+  const cls = state.teacherClass;
+  const label = cls === 'all' ? '전체' : `${cls}반`;
+
+  toast('📄 PDF 생성 중...');
+
+  try {
+    const url = cls === 'all' ? '/api/list' : `/api/list?class=${cls}`;
+    const r = await fetch(url);
+    if (!r.ok) { toast('❌ 데이터 로드 실패'); return; }
+    const students = await r.json();
+    if (!students || !students.length) { toast('출력할 학생 데이터가 없습니다.'); return; }
+
+    // 각 학생의 전체 데이터 가져오기
+    const details = await Promise.all(students.map(async s => {
+      try {
+        const dr = await fetch(`/api/get?key=${encodeURIComponent(s.key)}`);
+        return dr.ok ? await dr.json() : s;
+      } catch(e) { return s; }
+    }));
+    details.sort((a,b) => parseInt(a.class)-parseInt(b.class) || (a.studentId||'').localeCompare(b.studentId||''));
+
+    const settings = state.settings;
+    const now = toKST(new Date());
+
+    const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>${label} 글쓰기 수행평가</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:'Malgun Gothic','맑은 고딕',sans-serif; color:#1e293b; font-size:11pt; }
+  .cover{ text-align:center; padding:60px 0 40px; page-break-after:always; }
+  .cover h1{ font-size:24pt; font-weight:800; margin-bottom:12px; }
+  .cover h2{ font-size:16pt; color:#475569; margin-bottom:8px; }
+  .cover p{ font-size:11pt; color:#6b7280; margin-top:6px; }
+  .student{ page-break-before:always; padding-top:8px; }
+  .stu-header{ border-bottom:2px solid #1d4ed8; padding-bottom:10px; margin-bottom:16px; }
+  .stu-name{ font-size:16pt; font-weight:800; }
+  .stu-meta{ font-size:10pt; color:#475569; margin-top:4px; display:flex; gap:20px; flex-wrap:wrap; }
+  .essay-title{ font-size:14pt; font-weight:700; margin-bottom:14px; color:#1e293b; }
+  .essay-body{ font-size:11pt; line-height:2; white-space:pre-wrap; color:#1e293b; }
+  .no-content{ color:#9ca3af; font-style:italic; }
+  .footer{ margin-top:20px; padding-top:10px; border-top:1px solid #e2e8f0; font-size:9pt; color:#9ca3af; text-align:right; }
+</style>
+</head>
+<body>
+<div class="cover">
+  <h1>글쓰기 수행평가</h1>
+  <h2>과목: 독서와 사고 &nbsp;|&nbsp; ${label}</h2>
+  <p>주제: ${escHtml(settings.topic || '행복이란 무엇인가')}</p>
+  <p>출력 일시: ${now}</p>
+  <p>총 ${details.length}명</p>
+</div>
+${details.map((d,i) => `
+<div class="student">
+  <div class="stu-header">
+    <div class="stu-name">${i+1}. ${escHtml(d.name||'')} (${d.class}반)</div>
+    <div class="stu-meta">
+      <span>학번: ${escHtml(d.studentId||'')}</span>
+      <span>글자수: ${(d.content||'').length.toLocaleString()}자</span>
+      <span>작성 시간: ${fmtDuration(d.writingTime||0)}</span>
+      <span>제출: ${d.submittedAt ? toKST(new Date(d.submittedAt)) : '미제출'}</span>
+      <span>붙여넣기 시도: ${(d.pasteLog||[]).length}회</span>
+    </div>
+  </div>
+  <div class="essay-title">${d.title ? escHtml(d.title) : '(제목 없음)'}</div>
+  <div class="essay-body">${d.content ? escHtml(d.content) : '<span class="no-content">(내용 없음)</span>'}</div>
+  <div class="footer">${escHtml(d.name||'')} · ${d.class}반 · ${escHtml(d.studentId||'')} · 독서와 사고 글쓰기 수행평가</div>
+</div>`).join('')}
+</body></html>`;
+
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+    win.onload = () => { win.focus(); win.print(); };
+  } catch(e) {
+    toast('❌ PDF 생성 중 오류가 발생했습니다.');
+    console.error(e);
+  }
 }
 
 // ─── 읽기 전용 / 편집 모드 전환 ─────────────────────────────────────────────
