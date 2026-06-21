@@ -33,6 +33,8 @@ input,textarea,select,button{font-family:inherit}
 /* === CONTAINER === */
 .container{max-width:860px;margin:0 auto;padding:20px 16px 40px}
 .container.padtop{padding-top:68px}
+.container.full{max-width:100%;padding:20px 32px 40px}
+.container.full.padtop{padding-top:68px}
 
 /* === CARD === */
 .card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.09);padding:24px;margin-bottom:16px}
@@ -52,6 +54,8 @@ input,textarea,select,button{font-family:inherit}
 
 .form-row{margin-bottom:14px}
 .form-label{display:block;font-size:14px;font-weight:600;color:#374151;margin-bottom:6px}
+.inline-form{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.inline-field{flex:1;min-width:120px}
 .form-control{
   width:100%;padding:11px 14px;
   border:1.5px solid #d1d5db;border-radius:8px;
@@ -285,27 +289,29 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
     </div>
 
     <div class="card">
-      <div class="form-row">
-        <label class="form-label">분반</label>
-        <select class="form-control" id="inp-class">
-          <option value="">분반을 선택하세요</option>
-          <option value="1">1반</option>
-          <option value="2">2반</option>
-          <option value="3">3반</option>
-          <option value="4">4반</option>
-          <option value="5">5반</option>
-          <option value="6">6반</option>
-          <option value="7">7반</option>
-          <option value="8">8반</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label class="form-label">학번</label>
-        <input class="form-control" id="inp-sid" type="text" placeholder="학번을 입력하세요" maxlength="20">
-      </div>
-      <div class="form-row">
-        <label class="form-label">이름</label>
-        <input class="form-control" id="inp-name" type="text" placeholder="이름을 입력하세요" maxlength="10">
+      <div class="inline-form">
+        <div class="inline-field">
+          <label class="form-label">분반</label>
+          <select class="form-control" id="inp-class">
+            <option value="">분반 선택</option>
+            <option value="1">1반</option>
+            <option value="2">2반</option>
+            <option value="3">3반</option>
+            <option value="4">4반</option>
+            <option value="5">5반</option>
+            <option value="6">6반</option>
+            <option value="7">7반</option>
+            <option value="8">8반</option>
+          </select>
+        </div>
+        <div class="inline-field">
+          <label class="form-label">학번</label>
+          <input class="form-control" id="inp-sid" type="text" placeholder="학번 입력" maxlength="20">
+        </div>
+        <div class="inline-field">
+          <label class="form-label">이름</label>
+          <input class="form-control" id="inp-name" type="text" placeholder="이름 입력" maxlength="10">
+        </div>
       </div>
       <button class="btn-start" onclick="startWriting()">글쓰기 시작</button>
     </div>
@@ -411,7 +417,7 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
 
 <!-- ========== VIEW 4: 교사 대시보드 ========== -->
 <div class="view" id="view-dash">
-  <div class="container padtop">
+  <div class="container full padtop">
 
     <div class="dash-header">
       <span class="dash-title">교사 확인 대시보드</span>
