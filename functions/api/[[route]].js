@@ -27,13 +27,27 @@ export async function onRequest(context) {
     // ── GET /api/settings ────────────────────────────────────────────────────
     if (route === 'settings' && request.method === 'GET') {
       const s = await env.ESSAYS.get('settings', 'json');
-      return json(s ?? {
-        topic: '행복이란 무엇인가',
-        timeLimit: 100,
-        minChars: 1300,
-        maxChars: 1800,
-        targetChars: 1500,
-      });
+      if (!s) {
+        // 저장된 설정 없음 → 기본값 반환
+        const defaultId = 'asgn_default';
+        return json({
+          assignments: [
+            { id: defaultId, name: '기본 과제', topic: '행복이란 무엇인가', timeLimit: 100, minChars: 1300, maxChars: 1800 }
+          ],
+          activeAssignmentId: defaultId,
+        });
+      }
+      // 구형 포맷 (assignments 없음) → 신형으로 변환
+      if (!s.assignments) {
+        const defaultId = 'asgn_default';
+        return json({
+          assignments: [
+            { id: defaultId, name: '기본 과제', topic: s.topic || '행복이란 무엇인가', timeLimit: s.timeLimit || 100, minChars: s.minChars || 1300, maxChars: s.maxChars || 1800 }
+          ],
+          activeAssignmentId: defaultId,
+        });
+      }
+      return json(s);
     }
 
     // ── POST /api/settings ───────────────────────────────────────────────────
