@@ -254,6 +254,25 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
   border-radius:0 8px 8px 0;margin-bottom:8px;font-size:13px;color:#9a3412;
 }
 
+/* === LIVE TYPING GRID === */
+.live-toggle-btn{padding:7px 16px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;white-space:nowrap}
+.live-toggle-btn:hover{background:#1e293b}
+.live-toggle-btn.active{background:#7c3aed}
+.live-toggle-btn.active:hover{background:#6d28d9}
+.live-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;padding:4px 0}
+.live-card{border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 16px;background:#fafafa;display:flex;flex-direction:column;gap:10px;transition:border-color .2s}
+.live-card:hover{border-color:#a5b4fc}
+.live-card-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.live-card-name{font-size:15px;font-weight:800;color:#1e293b}
+.live-card-meta{font-size:12px;color:#6b7280}
+.live-card-chars{font-size:13px;font-weight:700;color:#1d4ed8}
+.live-card-title{font-size:13px;font-weight:700;color:#374151;border-bottom:1px solid #e2e8f0;padding-bottom:6px;min-height:20px}
+.live-card-essay{font-size:12px;line-height:1.75;color:#475569;white-space:pre-wrap;max-height:200px;overflow-y:auto;padding:8px;background:#fff;border:1px solid #f1f5f9;border-radius:6px;cursor:pointer}
+.live-card-essay:empty::before{content:'(아직 작성 없음)';color:#d1d5db}
+.live-card-footer{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#9ca3af}
+.live-card.submitted-card{border-color:#bbf7d0;background:#f0fdf4}
+.live-empty{text-align:center;color:#9ca3af;padding:40px;font-size:14px}
+
 /* === TOAST === */
 .toast{
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
@@ -454,28 +473,40 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
     <!-- 학생 목록 -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <span style="font-size:14px;color:#6b7280">※ 이름을 클릭하면 상세 내용을 확인할 수 있습니다.</span>
-        <button class="btn-pdf" onclick="downloadPDF()">📄 현재 반 PDF 다운로드</button>
+        <span id="dash-hint" style="font-size:14px;color:#6b7280">※ 이름을 클릭하면 상세 내용을 확인할 수 있습니다.</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="live-toggle-btn" id="btn-live-toggle" onclick="toggleLiveMode()">📺 라이브 타이핑 보기</button>
+          <button class="btn-pdf" onclick="downloadPDF()">📄 현재 반 PDF 다운로드</button>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table class="stu-table">
-          <thead>
-            <tr>
-              <th>반</th>
-              <th>이름</th>
-              <th>학번</th>
-              <th>주제</th>
-              <th>글자수</th>
-              <th>작성 시간</th>
-              <th>제출 완료 시간 (KST)</th>
-              <th>상태</th>
-              <th>삭제</th>
-            </tr>
-          </thead>
-          <tbody id="stu-tbody">
-            <tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:28px">아직 접속한 학생이 없습니다.</td></tr>
-          </tbody>
-        </table>
+      <!-- 목록 보기 (기본) -->
+      <div id="table-view">
+        <div class="table-wrap">
+          <table class="stu-table">
+            <thead>
+              <tr>
+                <th>반</th>
+                <th>이름</th>
+                <th>학번</th>
+                <th>주제</th>
+                <th>글자수</th>
+                <th>작성 시간</th>
+                <th>제출 완료 시간 (KST)</th>
+                <th>상태</th>
+                <th>삭제</th>
+              </tr>
+            </thead>
+            <tbody id="stu-tbody">
+              <tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:28px">아직 접속한 학생이 없습니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- 라이브 타이핑 보기 (카드 그리드) -->
+      <div id="live-view" style="display:none">
+        <div class="live-grid" id="live-grid">
+          <div class="live-empty">데이터 로딩 중...</div>
+        </div>
       </div>
     </div>
 
@@ -581,6 +612,7 @@ let state = {
   teacherAssignment: 'all',
   allStudents: [],
   selectedKey: null,
+  liveMode: false,
 };
 
 // ─── 화면 전환 ───────────────────────────────────────────────────────────────
@@ -1031,22 +1063,93 @@ function stopTeacherPolling() {
 async function fetchStudents() {
   try {
     const cls = state.teacherClass === 'all' ? '' : state.teacherClass;
-    const url = cls ? `/api/list?class=${cls}` : '/api/list';
+    const params = new URLSearchParams();
+    if (cls) params.set('class', cls);
+    if (state.liveMode) params.set('content', '1');
+    const url = '/api/list' + (params.toString() ? '?' + params.toString() : '');
     const r = await fetch(url);
     if (r.ok) {
       state.allStudents = await r.json();
-      renderTable(filterStudents(state.allStudents));
+      const filtered = filterStudents(state.allStudents);
+      if (state.liveMode) {
+        renderLiveGrid(filtered);
+      } else {
+        renderTable(filtered);
+      }
     } else {
       const err = await r.text();
       console.error('목록 조회 오류:', r.status, err);
       document.getElementById('stu-tbody').innerHTML =
-        `<tr><td colspan="7" style="text-align:center;color:#dc2626;padding:28px">⚠️ 데이터 로드 실패 (오류 ${r.status})<br><small style="color:#9ca3af">Cloudflare KV 바인딩(ESSAYS)이 설정되어 있는지 확인하세요.</small></td></tr>`;
+        `<tr><td colspan="9" style="text-align:center;color:#dc2626;padding:28px">⚠️ 데이터 로드 실패 (오류 ${r.status})<br><small style="color:#9ca3af">Cloudflare KV 바인딩(ESSAYS)이 설정되어 있는지 확인하세요.</small></td></tr>`;
     }
   } catch(e) {
     console.error('목록 조회 네트워크 오류:', e);
     document.getElementById('stu-tbody').innerHTML =
-      `<tr><td colspan="7" style="text-align:center;color:#dc2626;padding:28px">⚠️ 서버에 연결할 수 없습니다.<br><small style="color:#9ca3af">Cloudflare Pages에 배포된 상태인지 확인하세요.</small></td></tr>`;
+      `<tr><td colspan="9" style="text-align:center;color:#dc2626;padding:28px">⚠️ 서버에 연결할 수 없습니다.<br><small style="color:#9ca3af">Cloudflare Pages에 배포된 상태인지 확인하세요.</small></td></tr>`;
   }
+}
+
+function toggleLiveMode() {
+  state.liveMode = !state.liveMode;
+  const btn = document.getElementById('btn-live-toggle');
+  const tableView = document.getElementById('table-view');
+  const liveView  = document.getElementById('live-view');
+  const hint      = document.getElementById('dash-hint');
+
+  if (state.liveMode) {
+    btn.textContent = '📋 목록 보기';
+    btn.classList.add('active');
+    tableView.style.display = 'none';
+    liveView.style.display  = 'block';
+    hint.textContent = '※ 카드를 클릭하면 상세 내용을 확인할 수 있습니다. 3초마다 자동 갱신됩니다.';
+    clearInterval(state.teacherPollId);
+    state.teacherPollId = setInterval(fetchStudents, 3000);
+    fetchStudents();
+  } else {
+    btn.textContent = '📺 라이브 타이핑 보기';
+    btn.classList.remove('active');
+    tableView.style.display = 'block';
+    liveView.style.display  = 'none';
+    hint.textContent = '※ 이름을 클릭하면 상세 내용을 확인할 수 있습니다.';
+    clearInterval(state.teacherPollId);
+    state.teacherPollId = setInterval(fetchStudents, 5000);
+    fetchStudents();
+  }
+}
+
+function renderLiveGrid(students) {
+  const grid = document.getElementById('live-grid');
+  if (!students || !students.length) {
+    grid.innerHTML = '<div class="live-empty">아직 접속한 학생이 없습니다.</div>';
+    return;
+  }
+  students.sort((a,b) => parseInt(a.class)-parseInt(b.class) || (a.studentId||'').localeCompare(b.studentId||''));
+
+  grid.innerHTML = students.map(s => {
+    const chars   = (s.charCount || 0).toLocaleString();
+    const wtime   = fmtDuration(s.writingTime || 0);
+    const isSubmit = s.submitted;
+    const statusBadge = isSubmit
+      ? '<span class="badge badge-done">제출 완료</span>'
+      : (s.charCount > 0 ? '<span class="badge badge-wip">작성 중</span>' : '<span class="badge badge-none">미시작</span>');
+    const title   = escHtml(s.title || '(제목 없음)');
+    const content = escHtml(s.content || '');
+    return `<div class="live-card ${isSubmit ? 'submitted-card' : ''}" onclick="viewDetail('${escHtml(s.key)}')">
+      <div class="live-card-header">
+        <div>
+          <span class="live-card-name">${escHtml(s.name)}</span>
+          <span class="live-card-meta"> · ${s.class}반 · ${escHtml(s.studentId||'')}</span>
+        </div>
+        ${statusBadge}
+      </div>
+      <div class="live-card-title">제목: ${title}</div>
+      <div class="live-card-essay">${content}</div>
+      <div class="live-card-footer">
+        <span>글자수: <strong>${chars}자</strong></span>
+        <span>작성 시간: ${wtime}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderTable(students) {
@@ -1175,7 +1278,8 @@ function renderAssignmentTabs() {
 function selectAssignment(id) {
   state.teacherAssignment = id;
   renderAssignmentTabs();
-  renderTable(filterStudents(state.allStudents));
+  const filtered = filterStudents(state.allStudents);
+  state.liveMode ? renderLiveGrid(filtered) : renderTable(filtered);
 }
 
 function filterStudents(students) {

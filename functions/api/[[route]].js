@@ -104,7 +104,8 @@ export async function onRequest(context) {
 
     // ── GET /api/list  (교사 목록) ───────────────────────────────────────────
     if (route === 'list' && request.method === 'GET') {
-      const cls    = url.searchParams.get('class');
+      const cls            = url.searchParams.get('class');
+      const includeContent = url.searchParams.get('content') === '1';
       const prefix = cls ? `student_${cls}_` : 'student_';
       const list   = await env.ESSAYS.list({ prefix });
 
@@ -112,7 +113,7 @@ export async function onRequest(context) {
         list.keys.map(async ({ name }) => {
           const d = await env.ESSAYS.get(name, 'json');
           if (!d) return null;
-          return {
+          const row = {
             key:         name,
             class:       d.class,
             name:        d.name,
@@ -124,6 +125,11 @@ export async function onRequest(context) {
             submittedAt: d.submittedAt ?? null,
             lastSaved:   d.lastSaved   ?? null,
           };
+          if (includeContent) {
+            row.title   = d.title   ?? '';
+            row.content = d.content ?? '';
+          }
+          return row;
         })
       );
 
