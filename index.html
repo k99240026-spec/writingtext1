@@ -685,6 +685,13 @@ async function startWriting() {
 
   showView('write');
   initTextarea();
+
+  // 첫 문단 들여쓰기 즉시 적용 (기존 초안이 있으면 아래에서 덮어씀)
+  const ta = document.getElementById('essay-body');
+  ta.value = '　　';
+  ta.selectionStart = ta.selectionEnd = 2;
+  updateCharCount();
+
   startTimer();
   startAutoSave();
 
@@ -696,7 +703,7 @@ async function startWriting() {
       const data = await r.json();
       if (data && data.content) {
         document.getElementById('essay-title').value = data.title || '';
-        document.getElementById('essay-body').value  = data.content || '';
+        ta.value = data.content;
         state.pasteLog = data.pasteLog || [];
         updateCharCount();
 
@@ -705,10 +712,6 @@ async function startWriting() {
           setReadOnly(true);
           document.getElementById('submitted-modal').style.display = 'flex';
         }
-      } else {
-        // 새 글: 첫 문단 들여쓰기
-        document.getElementById('essay-body').value = '　　';
-        updateCharCount();
       }
     }
   } catch(e) {}
