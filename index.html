@@ -717,7 +717,10 @@ async function startWriting() {
 }
 
 function makeKey(s) {
-  return `student_${s.class}_${s.studentId}_${s.name}`;
+  const cls  = String(s.class      || '').replace(/[^0-9a-zA-Z가-힣]/g, '');
+  const sid  = String(s.studentId  || '').replace(/[^0-9a-zA-Z가-힣]/g, '');
+  const name = String(s.name       || '').replace(/[^0-9a-zA-Z가-힣]/g, '');
+  return `student_${cls}_${sid}_${name}`;
 }
 
 // ─── 제출 완료 모달 ──────────────────────────────────────────────────────────
@@ -956,7 +959,7 @@ function startAutoSave() {
 }
 
 async function doSave() {
-  if (!state.student) return;
+  if (!state.student || state.submitted) return;
   const payload = buildPayload();
   try {
     document.getElementById('save-info').textContent = '저장 중...';

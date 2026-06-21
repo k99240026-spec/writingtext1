@@ -63,6 +63,11 @@ export async function onRequest(context) {
       const key  = makeKey(data);
       const prev = (await env.ESSAYS.get(key, 'json')) ?? {};
 
+      // 이미 제출 완료된 경우 덮어쓰기 차단 (레이스 컨디션 방지)
+      if (prev.submitted === true) {
+        return json({ ok: true, skipped: true });
+      }
+
       // pasteLog 병합 (중복 제거: timestamp 기준)
       const prevPaste = prev.pasteLog ?? [];
       const newPaste  = data.pasteLog ?? [];
@@ -73,8 +78,8 @@ export async function onRequest(context) {
         ...data,
         pasteLog:    merged,
         lastSaved:   new Date().toISOString(),
-        submitted:   prev.submitted   ?? false,
-        submittedAt: prev.submittedAt ?? null,
+        submitted:   false,
+        submittedAt: null,
       };
 
       await env.ESSAYS.put(key, JSON.stringify(record));
