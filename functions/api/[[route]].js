@@ -103,6 +103,7 @@ export async function onRequest(context) {
             class:       d.class,
             name:        d.name,
             studentId:   d.studentId,
+            topic:       d.topic       ?? '-',
             charCount:   (d.content ?? '').length,
             writingTime: d.writingTime ?? 0,
             submitted:   d.submitted   ?? false,
@@ -121,6 +122,14 @@ export async function onRequest(context) {
       if (!key) return json({ error: 'key required' }, 400);
       const data = await env.ESSAYS.get(key, 'json');
       return json(data ?? null);
+    }
+
+    // ── POST /api/delete  (학생 데이터 삭제) ────────────────────────────────
+    if (route === 'delete' && request.method === 'POST') {
+      const { key } = await request.json();
+      if (!key) return json({ error: 'key required' }, 400);
+      await env.ESSAYS.delete(key);
+      return json({ ok: true });
     }
 
     return json({ error: 'Not found' }, 404);

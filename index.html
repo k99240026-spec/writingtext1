@@ -78,7 +78,7 @@ select.form-control{cursor:pointer;appearance:none;background-image:url("data:im
 
 /* 왼쪽 패널 */
 .write-left{
-  width:260px;flex-shrink:0;
+  width:320px;flex-shrink:0;
   background:#f8fafc;
   border-right:1.5px solid #e2e8f0;
   overflow-y:auto;
@@ -119,7 +119,7 @@ select.form-control{cursor:pointer;appearance:none;background-image:url("data:im
   border-bottom:1.5px solid #e2e8f0;
 }
 .title-input{
-  width:100%;font-size:18px;font-weight:700;
+  width:100%;font-size:22px;font-weight:700;
   border:none;outline:none;
   border-bottom:2px solid #e5e7eb;
   padding:4px 2px 10px;margin-bottom:6px;
@@ -134,7 +134,7 @@ select.form-control{cursor:pointer;appearance:none;background-image:url("data:im
 .essay-area{
   width:100%;height:100%;
   border:1.5px solid #e2e8f0;border-radius:10px 10px 0 0;
-  padding:16px 18px;font-size:15px;line-height:2;
+  padding:16px 18px;font-size:18px;line-height:2.1;
   resize:none;outline:none;color:#1e293b;background:#fafafa;
   transition:border-color .2s,background .2s;
   display:block;
@@ -197,6 +197,8 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
 .badge-done{background:#dcfce7;color:#15803d}
 .badge-wip{background:#fef3c7;color:#92400e}
 .badge-none{background:#f1f5f9;color:#6b7280}
+.btn-del{padding:4px 10px;background:#fff;border:1.5px solid #fca5a5;color:#dc2626;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-del:hover{background:#fef2f2}
 
 /* Settings */
 .section-title{font-size:15px;font-weight:800;color:#1e293b;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #e2e8f0}
@@ -415,14 +417,16 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
               <th>반</th>
               <th>이름</th>
               <th>학번</th>
+              <th>주제</th>
               <th>글자수</th>
               <th>작성 시간</th>
               <th>제출 완료 시간 (KST)</th>
               <th>상태</th>
+              <th>삭제</th>
             </tr>
           </thead>
           <tbody id="stu-tbody">
-            <tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:28px">아직 접속한 학생이 없습니다.</td></tr>
+            <tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:28px">아직 접속한 학생이 없습니다.</td></tr>
           </tbody>
         </table>
       </div>
@@ -752,6 +756,7 @@ function buildPayload() {
     writingTime: Math.floor((Date.now() - state.startTime) / 1000),
     pasteLog: state.pasteLog,
     startTime: new Date(state.startTime).toISOString(),
+    topic: state.settings.topic || '행복이란 무엇인가',
   };
 }
 
@@ -850,15 +855,16 @@ async function fetchStudents() {
 function renderTable(students) {
   const tbody = document.getElementById('stu-tbody');
   if (!students || !students.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:28px">아직 접속한 학생이 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:28px">아직 접속한 학생이 없습니다.</td></tr>';
     return;
   }
   students.sort((a,b) => parseInt(a.class)-parseInt(b.class) || (a.studentId||'').localeCompare(b.studentId||''));
 
   tbody.innerHTML = students.map(s => {
-    const wt  = fmtDuration(s.writingTime || 0);
-    const sub = s.submittedAt ? toKST(new Date(s.submittedAt)) : '-';
-    const cnt = s.charCount || 0;
+    const wt    = fmtDuration(s.writingTime || 0);
+    const sub   = s.submittedAt ? toKST(new Date(s.submittedAt)) : '-';
+    const cnt   = s.charCount || 0;
+    const topic = escHtml(s.topic || '-');
     const badge = s.submitted
       ? '<span class="badge badge-done">제출 완료</span>'
       : (cnt > 0 ? '<span class="badge badge-wip">작성 중</span>' : '<span class="badge badge-none">미작성</span>');
@@ -867,12 +873,33 @@ function renderTable(students) {
       <td>${s.class}반</td>
       <td><span class="name-link" onclick="viewDetail('${key}')">${escHtml(s.name)}</span></td>
       <td>${escHtml(s.studentId)}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${topic}">${topic}</td>
       <td>${cnt.toLocaleString()}자</td>
       <td>${wt}</td>
       <td>${sub}</td>
       <td>${badge}</td>
+      <td><button class="btn-del" onclick="deleteStudent('${key}', '${escHtml(s.name)}')">삭제</button></td>
     </tr>`;
   }).join('');
+}
+
+async function deleteStudent(key, name) {
+  if (!confirm(`${name} 학생의 데이터를 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.`)) return;
+  try {
+    const r = await fetch('/api/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key }),
+    });
+    if (r.ok) {
+      toast(`✅ ${name} 학생 데이터가 삭제되었습니다.`);
+      fetchStudents();
+    } else {
+      toast('❌ 삭제 실패: 서버 오류');
+    }
+  } catch(e) {
+    toast('❌ 삭제 실패: 네트워크 오류');
+  }
 }
 
 function selectClass(cls) {
