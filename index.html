@@ -135,7 +135,7 @@ select.form-control{cursor:pointer;appearance:none;background-image:url("data:im
 .title-input::placeholder{color:#9ca3af;font-weight:400}
 .writing-meta{font-size:12px;color:#6b7280;padding:3px 2px 8px;display:flex;gap:14px}
 
-.writing-body{flex:1;overflow:hidden;padding:10px 20px 0}
+.writing-body{flex:1;overflow:hidden;padding:10px 20px 0;max-width:1000px}
 .essay-area{
   width:100%;height:100%;
   border:1.5px solid #e2e8f0;border-radius:10px 10px 0 0;
@@ -254,42 +254,13 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
   border-radius:0 8px 8px 0;margin-bottom:8px;font-size:13px;color:#9a3412;
 }
 
-/* === TYPING PLAYBACK === */
-.btn-playback{padding:7px 16px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;white-space:nowrap}
-.btn-playback:hover{background:#6d28d9}
-.playback-section{margin-top:0}
-.playback-hint{font-size:12px;color:#9ca3af;margin-bottom:10px}
-.playback-scroll{overflow-x:auto;padding-bottom:8px;cursor:grab}
-.playback-scroll:active{cursor:grabbing}
-.playback-timeline{display:flex;gap:14px;width:max-content;padding:4px 2px}
-.playback-frame{width:290px;flex-shrink:0;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px 14px;background:#fff;display:flex;flex-direction:column;gap:6px}
-.playback-frame:first-child{border-color:#ddd6fe}
-.playback-frame:last-child{border-color:#bbf7d0;background:#f0fdf4}
-.playback-frame-badge{display:flex;align-items:center;gap:6px}
-.playback-frame-time{font-size:11px;font-weight:800;color:#7c3aed;background:#f5f3ff;padding:2px 8px;border-radius:20px}
-.playback-frame-chars{font-size:11px;color:#6b7280}
-.playback-frame-title{font-size:12px;font-weight:700;color:#374151;border-bottom:1px solid #f1f5f9;padding-bottom:6px;min-height:18px}
-.playback-frame-body{font-size:11px;line-height:1.75;color:#475569;white-space:pre-wrap;overflow-y:auto;max-height:320px;flex:1}
-.playback-empty{text-align:center;padding:32px;color:#9ca3af;font-size:14px}
-
-/* === LIVE TYPING GRID === */
-.live-toggle-btn{padding:7px 16px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;white-space:nowrap}
-.live-toggle-btn:hover{background:#1e293b}
-.live-toggle-btn.active{background:#7c3aed}
-.live-toggle-btn.active:hover{background:#6d28d9}
-.live-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;padding:4px 0}
-.live-card{border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 16px;background:#fafafa;display:flex;flex-direction:column;gap:10px;transition:border-color .2s}
-.live-card:hover{border-color:#a5b4fc}
-.live-card-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
-.live-card-name{font-size:15px;font-weight:800;color:#1e293b}
-.live-card-meta{font-size:12px;color:#6b7280}
-.live-card-chars{font-size:13px;font-weight:700;color:#1d4ed8}
-.live-card-title{font-size:13px;font-weight:700;color:#374151;border-bottom:1px solid #e2e8f0;padding-bottom:6px;min-height:20px}
-.live-card-essay{font-size:12px;line-height:1.75;color:#475569;white-space:pre-wrap;max-height:200px;overflow-y:auto;padding:8px;background:#fff;border:1px solid #f1f5f9;border-radius:6px;cursor:pointer}
-.live-card-essay:empty::before{content:'(아직 작성 없음)';color:#d1d5db}
-.live-card-footer{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#9ca3af}
-.live-card.submitted-card{border-color:#bbf7d0;background:#f0fdf4}
-.live-empty{text-align:center;color:#9ca3af;padding:40px;font-size:14px}
+/* === 붙여넣기 경고 === */
+.paste-alert-box{background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:14px 18px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.paste-alert-icon{font-size:28px;flex-shrink:0}
+.paste-alert-count{font-size:20px;font-weight:800;color:#dc2626}
+.paste-alert-label{font-size:13px;color:#9a3412;font-weight:600}
+.paste-ok-box{background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:12px 18px;display:flex;align-items:center;gap:10px;font-size:14px;color:#15803d;font-weight:700}
+.paste-item{padding:10px 14px;background:#fff7ed;border-left:3px solid #f97316;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:13px;color:#9a3412}
 
 /* === TOAST === */
 .toast{
@@ -491,40 +462,28 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
     <!-- 학생 목록 -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <span id="dash-hint" style="font-size:14px;color:#6b7280">※ 이름을 클릭하면 상세 내용을 확인할 수 있습니다.</span>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="live-toggle-btn" id="btn-live-toggle" onclick="toggleLiveMode()">📺 라이브 타이핑 보기</button>
-          <button class="btn-pdf" onclick="downloadPDF()">📄 현재 반 PDF 다운로드</button>
-        </div>
+        <span style="font-size:14px;color:#6b7280">※ 이름을 클릭하면 상세 내용을 확인할 수 있습니다.</span>
+        <button class="btn-pdf" onclick="downloadPDF()">📄 현재 반 PDF 다운로드</button>
       </div>
-      <!-- 목록 보기 (기본) -->
-      <div id="table-view">
-        <div class="table-wrap">
-          <table class="stu-table">
-            <thead>
-              <tr>
-                <th>반</th>
-                <th>이름</th>
-                <th>학번</th>
-                <th>주제</th>
-                <th>글자수</th>
-                <th>작성 시간</th>
-                <th>제출 완료 시간 (KST)</th>
-                <th>상태</th>
-                <th>삭제</th>
-              </tr>
-            </thead>
-            <tbody id="stu-tbody">
-              <tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:28px">아직 접속한 학생이 없습니다.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <!-- 라이브 타이핑 보기 (카드 그리드) -->
-      <div id="live-view" style="display:none">
-        <div class="live-grid" id="live-grid">
-          <div class="live-empty">데이터 로딩 중...</div>
-        </div>
+      <div class="table-wrap">
+        <table class="stu-table">
+          <thead>
+            <tr>
+              <th>반</th>
+              <th>이름</th>
+              <th>학번</th>
+              <th>주제</th>
+              <th>글자수</th>
+              <th>작성 시간</th>
+              <th>제출 완료 시간 (KST)</th>
+              <th>상태</th>
+              <th>삭제</th>
+            </tr>
+          </thead>
+          <tbody id="stu-tbody">
+            <tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:28px">아직 접속한 학생이 없습니다.</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -590,34 +549,22 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
       </div>
     </div>
 
+    <!-- 붙여넣기 시도 기록 (상단 강조) -->
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
-        <h3 class="section-title" style="border:none;margin:0;padding:0">작성 내용</h3>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn-playback" id="btn-playback" onclick="togglePlayback()">⏪ 타이핑 보기</button>
-          <span class="live-badge" id="detail-live"><span class="live-dot"></span>실시간 모니터링 중</span>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 class="section-title" style="border:none;margin:0;padding:0">붙여넣기 시도 기록</h3>
+        <span class="live-badge" id="detail-live"><span class="live-dot"></span>실시간 모니터링 중</span>
       </div>
-      <!-- 타이핑 과정 타임라인 (숨김) -->
-      <div id="playback-section" class="playback-section" style="display:none">
-        <p class="playback-hint">← 가로로 스크롤하여 처음부터 제출까지의 타이핑 과정을 확인하세요 →</p>
-        <div class="playback-scroll" id="playback-scroll">
-          <div class="playback-timeline" id="playback-timeline"></div>
-        </div>
-      </div>
-      <!-- 최종 작성 내용 -->
-      <div id="final-content-section">
-        <div style="font-size:16px;font-weight:800;margin-bottom:12px;color:#1e293b" id="d-essay-title"></div>
-        <div class="essay-display" id="d-essay-body" style="user-select:text"></div>
-        <p style="font-size:12px;color:#9ca3af;margin-top:8px">※ 위 내용은 자유롭게 드래그하여 복사하실 수 있습니다.</p>
+      <div id="paste-log">
+        <div class="paste-ok-box">✅ 붙여넣기 시도 없음</div>
       </div>
     </div>
 
     <div class="card">
-      <h3 class="section-title">붙여넣기 시도 기록</h3>
-      <div id="paste-log">
-        <p style="font-size:14px;color:#9ca3af">붙여넣기 시도 기록이 없습니다.</p>
-      </div>
+      <h3 class="section-title" style="margin-bottom:14px">작성 내용</h3>
+      <div style="font-size:16px;font-weight:800;margin-bottom:12px;color:#1e293b" id="d-essay-title"></div>
+      <div class="essay-display" id="d-essay-body" style="user-select:text"></div>
+      <p style="font-size:12px;color:#9ca3af;margin-top:8px">※ 위 내용은 자유롭게 드래그하여 복사하실 수 있습니다.</p>
     </div>
 
   </div>
@@ -643,7 +590,6 @@ let state = {
   teacherAssignment: 'all',
   allStudents: [],
   selectedKey: null,
-  liveMode: false,
 };
 
 // ─── 화면 전환 ───────────────────────────────────────────────────────────────
@@ -759,6 +705,10 @@ async function startWriting() {
           setReadOnly(true);
           document.getElementById('submitted-modal').style.display = 'flex';
         }
+      } else {
+        // 새 글: 첫 문단 들여쓰기
+        document.getElementById('essay-body').value = '　　';
+        updateCharCount();
       }
     }
   } catch(e) {}
@@ -898,6 +848,18 @@ function initTextarea() {
 
   newTa.addEventListener('input', updateCharCount);
 
+  // Enter → 새 문단 두 칸 들여쓰기
+  newTa.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const s = newTa.selectionStart;
+    const end = newTa.selectionEnd;
+    const indent = '　　'; // 전각 공백 2칸
+    newTa.value = newTa.value.substring(0, s) + '\n' + indent + newTa.value.substring(end);
+    newTa.selectionStart = newTa.selectionEnd = s + 1 + indent.length;
+    updateCharCount();
+  });
+
   // 붙여넣기 차단 + 기록
   newTa.addEventListener('paste', e => {
     e.preventDefault();
@@ -993,7 +955,7 @@ function startAutoSave() {
 
 async function doSave() {
   if (!state.student) return;
-  const payload = buildPayload(true); // true = 스냅샷 포함
+  const payload = buildPayload();
   try {
     document.getElementById('save-info').textContent = '저장 중...';
     const r = await fetch('/api/save', {
@@ -1014,23 +976,16 @@ async function doSave() {
   }
 }
 
-function buildPayload(includeSnapshot) {
-  const t       = Math.floor((Date.now() - state.startTime) / 1000);
-  const title   = document.getElementById('essay-title').value;
-  const content = document.getElementById('essay-body').value;
-  const payload = {
+function buildPayload() {
+  return {
     ...state.student,
-    title,
-    content,
-    writingTime: t,
-    pasteLog: state.pasteLog,
-    startTime: new Date(state.startTime).toISOString(),
-    topic: getActiveAssignment().topic,
+    title:       document.getElementById('essay-title').value,
+    content:     document.getElementById('essay-body').value,
+    writingTime: Math.floor((Date.now() - state.startTime) / 1000),
+    pasteLog:    state.pasteLog,
+    startTime:   new Date(state.startTime).toISOString(),
+    topic:       getActiveAssignment().topic,
   };
-  if (includeSnapshot) {
-    payload.snapshot = { t, title, content };
-  }
-  return payload;
 }
 
 // ─── 최종 제출 ───────────────────────────────────────────────────────────────
@@ -1101,19 +1056,11 @@ function stopTeacherPolling() {
 async function fetchStudents() {
   try {
     const cls = state.teacherClass === 'all' ? '' : state.teacherClass;
-    const params = new URLSearchParams();
-    if (cls) params.set('class', cls);
-    if (state.liveMode) params.set('content', '1');
-    const url = '/api/list' + (params.toString() ? '?' + params.toString() : '');
+    const url = cls ? `/api/list?class=${cls}` : '/api/list';
     const r = await fetch(url);
     if (r.ok) {
       state.allStudents = await r.json();
-      const filtered = filterStudents(state.allStudents);
-      if (state.liveMode) {
-        renderLiveGrid(filtered);
-      } else {
-        renderTable(filtered);
-      }
+      renderTable(filterStudents(state.allStudents));
     } else {
       const err = await r.text();
       console.error('목록 조회 오류:', r.status, err);
@@ -1125,69 +1072,6 @@ async function fetchStudents() {
     document.getElementById('stu-tbody').innerHTML =
       `<tr><td colspan="9" style="text-align:center;color:#dc2626;padding:28px">⚠️ 서버에 연결할 수 없습니다.<br><small style="color:#9ca3af">Cloudflare Pages에 배포된 상태인지 확인하세요.</small></td></tr>`;
   }
-}
-
-function toggleLiveMode() {
-  state.liveMode = !state.liveMode;
-  const btn = document.getElementById('btn-live-toggle');
-  const tableView = document.getElementById('table-view');
-  const liveView  = document.getElementById('live-view');
-  const hint      = document.getElementById('dash-hint');
-
-  if (state.liveMode) {
-    btn.textContent = '📋 목록 보기';
-    btn.classList.add('active');
-    tableView.style.display = 'none';
-    liveView.style.display  = 'block';
-    hint.textContent = '※ 카드를 클릭하면 상세 내용을 확인할 수 있습니다. 3초마다 자동 갱신됩니다.';
-    clearInterval(state.teacherPollId);
-    state.teacherPollId = setInterval(fetchStudents, 3000);
-    fetchStudents();
-  } else {
-    btn.textContent = '📺 라이브 타이핑 보기';
-    btn.classList.remove('active');
-    tableView.style.display = 'block';
-    liveView.style.display  = 'none';
-    hint.textContent = '※ 이름을 클릭하면 상세 내용을 확인할 수 있습니다.';
-    clearInterval(state.teacherPollId);
-    state.teacherPollId = setInterval(fetchStudents, 5000);
-    fetchStudents();
-  }
-}
-
-function renderLiveGrid(students) {
-  const grid = document.getElementById('live-grid');
-  if (!students || !students.length) {
-    grid.innerHTML = '<div class="live-empty">아직 접속한 학생이 없습니다.</div>';
-    return;
-  }
-  students.sort((a,b) => parseInt(a.class)-parseInt(b.class) || (a.studentId||'').localeCompare(b.studentId||''));
-
-  grid.innerHTML = students.map(s => {
-    const chars   = (s.charCount || 0).toLocaleString();
-    const wtime   = fmtDuration(s.writingTime || 0);
-    const isSubmit = s.submitted;
-    const statusBadge = isSubmit
-      ? '<span class="badge badge-done">제출 완료</span>'
-      : (s.charCount > 0 ? '<span class="badge badge-wip">작성 중</span>' : '<span class="badge badge-none">미시작</span>');
-    const title   = escHtml(s.title || '(제목 없음)');
-    const content = escHtml(s.content || '');
-    return `<div class="live-card ${isSubmit ? 'submitted-card' : ''}" onclick="viewDetail('${escHtml(s.key)}')">
-      <div class="live-card-header">
-        <div>
-          <span class="live-card-name">${escHtml(s.name)}</span>
-          <span class="live-card-meta"> · ${s.class}반 · ${escHtml(s.studentId||'')}</span>
-        </div>
-        ${statusBadge}
-      </div>
-      <div class="live-card-title">제목: ${title}</div>
-      <div class="live-card-essay">${content}</div>
-      <div class="live-card-footer">
-        <span>글자수: <strong>${chars}자</strong></span>
-        <span>작성 시간: ${wtime}</span>
-      </div>
-    </div>`;
-  }).join('');
 }
 
 function renderTable(students) {
@@ -1316,8 +1200,7 @@ function renderAssignmentTabs() {
 function selectAssignment(id) {
   state.teacherAssignment = id;
   renderAssignmentTabs();
-  const filtered = filterStudents(state.allStudents);
-  state.liveMode ? renderLiveGrid(filtered) : renderTable(filtered);
+  renderTable(filterStudents(state.allStudents));
 }
 
 function filterStudents(students) {
@@ -1478,86 +1361,28 @@ async function fetchDetail() {
     document.getElementById('d-essay-title').textContent = d.title ? `제목: ${d.title}` : '(제목 없음)';
     document.getElementById('d-essay-body').textContent  = d.content || '(아직 내용 없음)';
 
-    _playbackData = d.snapshots || [];
-    if (_playbackOpen) renderPlayback(_playbackData);
-
     const pasteContainer = document.getElementById('paste-log');
-    if (d.pasteLog && d.pasteLog.length > 0) {
-      pasteContainer.innerHTML = d.pasteLog.map((p, i) =>
-        `<div class="paste-item">🚨 붙여넣기 시도 #${i+1} &nbsp;— &nbsp;${escHtml(p.kstTime)}</div>`
-      ).join('');
+    const log = d.pasteLog || [];
+    if (log.length > 0) {
+      pasteContainer.innerHTML =
+        `<div class="paste-alert-box">
+          <div class="paste-alert-icon">🚨</div>
+          <div>
+            <div class="paste-alert-count">${log.length}회 붙여넣기 시도 감지!</div>
+            <div class="paste-alert-label">아래에서 시도 일시를 확인하세요.</div>
+          </div>
+        </div>` +
+        log.map((p, i) =>
+          `<div class="paste-item">붙여넣기 시도 #${i+1} &nbsp;— &nbsp;${escHtml(p.kstTime)}</div>`
+        ).join('');
     } else {
-      pasteContainer.innerHTML = '<p style="font-size:14px;color:#9ca3af">붙여넣기 시도 기록이 없습니다.</p>';
+      pasteContainer.innerHTML = '<div class="paste-ok-box">✅ 붙여넣기 시도 없음</div>';
     }
   } catch(e) {}
 }
 
-let _playbackOpen = false;
-let _playbackData  = [];
-
-function togglePlayback() {
-  _playbackOpen = !_playbackOpen;
-  const section = document.getElementById('playback-section');
-  const final   = document.getElementById('final-content-section');
-  const btn     = document.getElementById('btn-playback');
-  if (_playbackOpen) {
-    section.style.display = 'block';
-    final.style.display   = 'none';
-    btn.textContent = '✏️ 최종 내용 보기';
-    renderPlayback(_playbackData);
-    // 가로 드래그 스크롤
-    initDragScroll(document.getElementById('playback-scroll'));
-  } else {
-    section.style.display = 'none';
-    final.style.display   = 'block';
-    btn.textContent = '⏪ 타이핑 보기';
-  }
-}
-
-function renderPlayback(snapshots) {
-  const tl = document.getElementById('playback-timeline');
-  if (!snapshots || !snapshots.length) {
-    tl.innerHTML = '<div class="playback-empty">저장된 타이핑 기록이 없습니다.<br><small>다음 자동 저장(10초마다)부터 기록됩니다.</small></div>';
-    return;
-  }
-  tl.innerHTML = snapshots.map((s, i) => {
-    const m   = String(Math.floor(s.t / 60)).padStart(2,'0');
-    const sec = String(s.t % 60).padStart(2,'0');
-    const isFirst = i === 0;
-    const isLast  = i === snapshots.length - 1;
-    const label   = isFirst ? '시작' : isLast ? '제출 직전' : `${i+1}번째`;
-    return `<div class="playback-frame">
-      <div class="playback-frame-badge">
-        <span class="playback-frame-time">${m}:${sec}</span>
-        <span class="playback-frame-chars">${(s.content||'').length}자 · ${label}</span>
-      </div>
-      <div class="playback-frame-title">${escHtml(s.title || '(제목 없음)')}</div>
-      <div class="playback-frame-body">${escHtml(s.content || '(내용 없음)')}</div>
-    </div>`;
-  }).join('');
-}
-
-function initDragScroll(el) {
-  if (!el || el._dragBound) return;
-  el._dragBound = true;
-  let isDown = false, startX, scrollLeft;
-  el.addEventListener('mousedown', e => { isDown = true; startX = e.pageX - el.offsetLeft; scrollLeft = el.scrollLeft; });
-  el.addEventListener('mouseleave', () => { isDown = false; });
-  el.addEventListener('mouseup', () => { isDown = false; });
-  el.addEventListener('mousemove', e => {
-    if (!isDown) return;
-    e.preventDefault();
-    el.scrollLeft = scrollLeft - (e.pageX - el.offsetLeft - startX);
-  });
-}
-
 function backToDash() {
   clearInterval(state.detailPollId);
-  _playbackOpen = false;
-  _playbackData = [];
-  document.getElementById('playback-section').style.display = 'none';
-  document.getElementById('final-content-section').style.display = 'block';
-  document.getElementById('btn-playback').textContent = '⏪ 타이핑 보기';
   showView('dash');
 }
 
