@@ -135,7 +135,7 @@ select.form-control{cursor:pointer;appearance:none;background-image:url("data:im
 .title-input::placeholder{color:#9ca3af;font-weight:400}
 .writing-meta{font-size:12px;color:#6b7280;padding:3px 2px 8px;display:flex;gap:14px}
 
-.writing-body{flex:1;overflow:hidden;padding:10px 20px 0;max-width:880px}
+.writing-body{flex:1;overflow:hidden;padding:10px 20px 0;max-width:800px}
 .essay-area{
   width:100%;height:100%;
   border:1.5px solid #e2e8f0;border-radius:10px 10px 0 0;
@@ -294,7 +294,6 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
 <!-- ========== VIEW 1: 학생 등록 ========== -->
 <div class="view active" id="view-reg">
   <div class="container padtop">
-    <p class="subject-tag">과목: 독서와 사고</p>
     <h1 class="page-title">글쓰기 수행평가 안내</h1>
 
     <div class="info-box">
@@ -688,8 +687,8 @@ async function startWriting() {
 
   // 첫 문단 들여쓰기 즉시 적용 (기존 초안이 있으면 아래에서 덮어씀)
   const ta = document.getElementById('essay-body');
-  ta.value = '';
-  ta.selectionStart = ta.selectionEnd = 2;
+  ta.value = '　'; // 전각 공백 1칸 들여쓰기
+  ta.selectionStart = ta.selectionEnd = 1;
   updateCharCount();
 
   startTimer();
@@ -857,7 +856,7 @@ function initTextarea() {
     e.preventDefault();
     const s = newTa.selectionStart;
     const end = newTa.selectionEnd;
-    const indent = ''; // 전각 공백 1칸
+    const indent = '　'; // 전각 공백 1칸 (U+3000)
     newTa.value = newTa.value.substring(0, s) + '\n' + indent + newTa.value.substring(end);
     newTa.selectionStart = newTa.selectionEnd = s + 1 + indent.length;
     updateCharCount();
