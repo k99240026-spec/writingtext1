@@ -199,6 +199,8 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
 .badge-none{background:#f1f5f9;color:#6b7280}
 .btn-del{padding:4px 10px;background:#fff;border:1.5px solid #fca5a5;color:#dc2626;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
 .btn-del:hover{background:#fef2f2}
+.btn-unlock{padding:3px 8px;background:#fff;border:1.5px solid #6366f1;color:#4f46e5;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;margin-left:6px}
+.btn-unlock:hover{background:#eef2ff}
 
 /* Settings */
 .section-title{font-size:15px;font-weight:800;color:#1e293b;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #e2e8f0}
@@ -614,6 +616,11 @@ async function startWriting() {
         document.getElementById('essay-body').value  = data.content || '';
         state.pasteLog = data.pasteLog || [];
         updateCharCount();
+
+        // 제출 완료 상태면 읽기 전용 모드
+        if (data.submitted) {
+          setReadOnly(true);
+        }
       }
     }
   } catch(e) {}
@@ -621,6 +628,36 @@ async function startWriting() {
 
 function makeKey(s) {
   return `student_${s.class}_${s.studentId}_${s.name}`;
+}
+
+// ─── 읽기 전용 / 편집 모드 전환 ─────────────────────────────────────────────
+function setReadOnly(isReadOnly) {
+  state.submitted = isReadOnly;
+  const ta    = document.getElementById('essay-body');
+  const title = document.getElementById('essay-title');
+  const btn   = document.getElementById('btn-submit');
+
+  ta.disabled    = isReadOnly;
+  title.disabled = isReadOnly;
+  btn.disabled   = isReadOnly;
+
+  if (isReadOnly) {
+    btn.textContent = '✓ 제출 완료';
+    document.getElementById('save-info').textContent = '✓ 제출 완료 (읽기 전용)';
+    ta.style.background    = '#f8fafc';
+    ta.style.color         = '#475569';
+    title.style.color      = '#475569';
+    clearInterval(state.timerId);
+    clearInterval(state.autoSaveId);
+  } else {
+    btn.textContent = '최종 제출하기';
+    document.getElementById('save-info').textContent = '자동 저장 대기 중';
+    ta.style.background = '';
+    ta.style.color      = '';
+    title.style.color   = '';
+    startTimer();
+    startAutoSave();
+  }
 }
 
 // ─── 글쓰기 영역 설정 ────────────────────────────────────────────────────────
@@ -791,15 +828,7 @@ async function finalSubmit(auto) {
       throw new Error(`서버 오류 ${r.status}`);
     }
 
-    clearInterval(state.timerId);
-    clearInterval(state.autoSaveId);
-
-    document.getElementById('btn-submit').disabled = true;
-    document.getElementById('btn-submit').textContent = '✓ 제출 완료';
-    document.getElementById('essay-body').disabled = true;
-    document.getElementById('essay-title').disabled = true;
-    document.getElementById('save-info').textContent = '✓ 최종 제출 완료';
-
+    setReadOnly(true);
     toast('✅ 최종 제출이 완료되었습니다. 수고하셨습니다!');
   } catch(e) {
     state.submitted = false;
@@ -866,7 +895,7 @@ function renderTable(students) {
     const cnt   = s.charCount || 0;
     const topic = escHtml(s.topic || '-');
     const badge = s.submitted
-      ? '<span class="badge badge-done">제출 완료</span>'
+      ? `<span class="badge badge-done">제출 완료</span> <button class="btn-unlock" onclick="unlockStudent('${escHtml(s.key)}','${escHtml(s.name)}')">수정 허용</button>`
       : (cnt > 0 ? '<span class="badge badge-wip">작성 중</span>' : '<span class="badge badge-none">미작성</span>');
     const key = escHtml(s.key);
     return `<tr>
@@ -881,6 +910,25 @@ function renderTable(students) {
       <td><button class="btn-del" onclick="deleteStudent('${key}', '${escHtml(s.name)}')">삭제</button></td>
     </tr>`;
   }).join('');
+}
+
+async function unlockStudent(key, name) {
+  if (!confirm(`${name} 학생의 제출을 취소하고 수정을 허용하시겠습니까?`)) return;
+  try {
+    const r = await fetch('/api/unlock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key }),
+    });
+    if (r.ok) {
+      toast(`✅ ${name} 학생의 수정이 허용되었습니다.`);
+      fetchStudents();
+    } else {
+      toast('❌ 수정 허용 실패: 서버 오류');
+    }
+  } catch(e) {
+    toast('❌ 수정 허용 실패: 네트워크 오류');
+  }
 }
 
 async function deleteStudent(key, name) {

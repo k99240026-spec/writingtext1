@@ -132,6 +132,19 @@ export async function onRequest(context) {
       return json({ ok: true });
     }
 
+    // ── POST /api/unlock  (제출 취소 → 수정 허용) ───────────────────────────
+    if (route === 'unlock' && request.method === 'POST') {
+      const { key } = await request.json();
+      if (!key) return json({ error: 'key required' }, 400);
+      const prev = (await env.ESSAYS.get(key, 'json')) ?? {};
+      await env.ESSAYS.put(key, JSON.stringify({
+        ...prev,
+        submitted: false,
+        submittedAt: null,
+      }));
+      return json({ ok: true });
+    }
+
     return json({ error: 'Not found' }, 404);
 
   } catch (err) {
