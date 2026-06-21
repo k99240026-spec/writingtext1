@@ -82,7 +82,7 @@ select.form-control{cursor:pointer;appearance:none;background-image:url("data:im
 
 /* 왼쪽 패널 */
 .write-left{
-  width:640px;flex-shrink:0;
+  width:420px;flex-shrink:0;
   background:#f8fafc;
   border-right:1.5px solid #e2e8f0;
   overflow:hidden;
@@ -253,6 +253,24 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
   padding:10px 14px;background:#fff7ed;border-left:3px solid #f97316;
   border-radius:0 8px 8px 0;margin-bottom:8px;font-size:13px;color:#9a3412;
 }
+
+/* === TYPING PLAYBACK === */
+.btn-playback{padding:7px 16px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;white-space:nowrap}
+.btn-playback:hover{background:#6d28d9}
+.playback-section{margin-top:0}
+.playback-hint{font-size:12px;color:#9ca3af;margin-bottom:10px}
+.playback-scroll{overflow-x:auto;padding-bottom:8px;cursor:grab}
+.playback-scroll:active{cursor:grabbing}
+.playback-timeline{display:flex;gap:14px;width:max-content;padding:4px 2px}
+.playback-frame{width:290px;flex-shrink:0;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px 14px;background:#fff;display:flex;flex-direction:column;gap:6px}
+.playback-frame:first-child{border-color:#ddd6fe}
+.playback-frame:last-child{border-color:#bbf7d0;background:#f0fdf4}
+.playback-frame-badge{display:flex;align-items:center;gap:6px}
+.playback-frame-time{font-size:11px;font-weight:800;color:#7c3aed;background:#f5f3ff;padding:2px 8px;border-radius:20px}
+.playback-frame-chars{font-size:11px;color:#6b7280}
+.playback-frame-title{font-size:12px;font-weight:700;color:#374151;border-bottom:1px solid #f1f5f9;padding-bottom:6px;min-height:18px}
+.playback-frame-body{font-size:11px;line-height:1.75;color:#475569;white-space:pre-wrap;overflow-y:auto;max-height:320px;flex:1}
+.playback-empty{text-align:center;padding:32px;color:#9ca3af;font-size:14px}
 
 /* === LIVE TYPING GRID === */
 .live-toggle-btn{padding:7px 16px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;white-space:nowrap}
@@ -575,11 +593,24 @@ table.stu-table{width:100%;border-collapse:collapse;font-size:14px}
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
         <h3 class="section-title" style="border:none;margin:0;padding:0">작성 내용</h3>
-        <span class="live-badge" id="detail-live"><span class="live-dot"></span>실시간 모니터링 중</span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn-playback" id="btn-playback" onclick="togglePlayback()">⏪ 타이핑 보기</button>
+          <span class="live-badge" id="detail-live"><span class="live-dot"></span>실시간 모니터링 중</span>
+        </div>
       </div>
-      <div style="font-size:16px;font-weight:800;margin-bottom:12px;color:#1e293b" id="d-essay-title"></div>
-      <div class="essay-display" id="d-essay-body" style="user-select:text"></div>
-      <p style="font-size:12px;color:#9ca3af;margin-top:8px">※ 위 내용은 자유롭게 드래그하여 복사하실 수 있습니다.</p>
+      <!-- 타이핑 과정 타임라인 (숨김) -->
+      <div id="playback-section" class="playback-section" style="display:none">
+        <p class="playback-hint">← 가로로 스크롤하여 처음부터 제출까지의 타이핑 과정을 확인하세요 →</p>
+        <div class="playback-scroll" id="playback-scroll">
+          <div class="playback-timeline" id="playback-timeline"></div>
+        </div>
+      </div>
+      <!-- 최종 작성 내용 -->
+      <div id="final-content-section">
+        <div style="font-size:16px;font-weight:800;margin-bottom:12px;color:#1e293b" id="d-essay-title"></div>
+        <div class="essay-display" id="d-essay-body" style="user-select:text"></div>
+        <p style="font-size:12px;color:#9ca3af;margin-top:8px">※ 위 내용은 자유롭게 드래그하여 복사하실 수 있습니다.</p>
+      </div>
     </div>
 
     <div class="card">
@@ -694,8 +725,6 @@ async function startWriting() {
 
   document.getElementById('writing-meta').innerHTML =
     `<span>${cls}반</span><span>학번: ${sid}</span><span>이름: ${name}</span>`;
-  document.getElementById('lp-student').innerHTML =
-    `<strong>${name}</strong> &nbsp;${cls}반 &nbsp;${sid}`;
 
   // 왼쪽 패널 과제 안내 업데이트
   const a = getActiveAssignment();
@@ -894,8 +923,9 @@ function initTextarea() {
 function updateCharCount() {
   const content = document.getElementById('essay-body').value;
   const cnt = content.length;
-  const min = state.settings.minChars || 1300;
-  const max = state.settings.maxChars || 1800;
+  const a   = getActiveAssignment();
+  const min = a.minChars || 1300;
+  const max = a.maxChars || 1800;
 
   const big = document.getElementById('char-big');
   const bar = document.getElementById('char-bar');
@@ -932,7 +962,7 @@ function startTimer() {
     const s = String(sec % 60).padStart(2,'0');
     document.getElementById('time-display').textContent = `${m}:${s}`;
 
-    const limitSec = (state.settings.timeLimit || 100) * 60;
+    const limitSec = (getActiveAssignment().timeLimit || 100) * 60;
     const remaining = limitSec - sec;
     const warnEl = document.getElementById('time-warn');
 
@@ -963,7 +993,7 @@ function startAutoSave() {
 
 async function doSave() {
   if (!state.student) return;
-  const payload = buildPayload();
+  const payload = buildPayload(true); // true = 스냅샷 포함
   try {
     document.getElementById('save-info').textContent = '저장 중...';
     const r = await fetch('/api/save', {
@@ -984,16 +1014,23 @@ async function doSave() {
   }
 }
 
-function buildPayload() {
-  return {
+function buildPayload(includeSnapshot) {
+  const t       = Math.floor((Date.now() - state.startTime) / 1000);
+  const title   = document.getElementById('essay-title').value;
+  const content = document.getElementById('essay-body').value;
+  const payload = {
     ...state.student,
-    title: document.getElementById('essay-title').value,
-    content: document.getElementById('essay-body').value,
-    writingTime: Math.floor((Date.now() - state.startTime) / 1000),
+    title,
+    content,
+    writingTime: t,
     pasteLog: state.pasteLog,
     startTime: new Date(state.startTime).toISOString(),
     topic: getActiveAssignment().topic,
   };
+  if (includeSnapshot) {
+    payload.snapshot = { t, title, content };
+  }
+  return payload;
 }
 
 // ─── 최종 제출 ───────────────────────────────────────────────────────────────
@@ -1002,8 +1039,9 @@ async function finalSubmit(auto) {
 
   const content = document.getElementById('essay-body').value;
   const cnt = content.length;
-  const min = state.settings.minChars || 1300;
-  const max = state.settings.maxChars || 1800;
+  const a   = getActiveAssignment();
+  const min = a.minChars || 1300;
+  const max = a.maxChars || 1800;
 
   if (!auto) {
     if (cnt < min && !confirm(`현재 ${cnt}자로 최소 글자수(${min}자)에 미치지 못합니다.\n그래도 제출하시겠습니까?`)) return;
@@ -1440,6 +1478,9 @@ async function fetchDetail() {
     document.getElementById('d-essay-title').textContent = d.title ? `제목: ${d.title}` : '(제목 없음)';
     document.getElementById('d-essay-body').textContent  = d.content || '(아직 내용 없음)';
 
+    _playbackData = d.snapshots || [];
+    if (_playbackOpen) renderPlayback(_playbackData);
+
     const pasteContainer = document.getElementById('paste-log');
     if (d.pasteLog && d.pasteLog.length > 0) {
       pasteContainer.innerHTML = d.pasteLog.map((p, i) =>
@@ -1451,8 +1492,72 @@ async function fetchDetail() {
   } catch(e) {}
 }
 
+let _playbackOpen = false;
+let _playbackData  = [];
+
+function togglePlayback() {
+  _playbackOpen = !_playbackOpen;
+  const section = document.getElementById('playback-section');
+  const final   = document.getElementById('final-content-section');
+  const btn     = document.getElementById('btn-playback');
+  if (_playbackOpen) {
+    section.style.display = 'block';
+    final.style.display   = 'none';
+    btn.textContent = '✏️ 최종 내용 보기';
+    renderPlayback(_playbackData);
+    // 가로 드래그 스크롤
+    initDragScroll(document.getElementById('playback-scroll'));
+  } else {
+    section.style.display = 'none';
+    final.style.display   = 'block';
+    btn.textContent = '⏪ 타이핑 보기';
+  }
+}
+
+function renderPlayback(snapshots) {
+  const tl = document.getElementById('playback-timeline');
+  if (!snapshots || !snapshots.length) {
+    tl.innerHTML = '<div class="playback-empty">저장된 타이핑 기록이 없습니다.<br><small>다음 자동 저장(10초마다)부터 기록됩니다.</small></div>';
+    return;
+  }
+  tl.innerHTML = snapshots.map((s, i) => {
+    const m   = String(Math.floor(s.t / 60)).padStart(2,'0');
+    const sec = String(s.t % 60).padStart(2,'0');
+    const isFirst = i === 0;
+    const isLast  = i === snapshots.length - 1;
+    const label   = isFirst ? '시작' : isLast ? '제출 직전' : `${i+1}번째`;
+    return `<div class="playback-frame">
+      <div class="playback-frame-badge">
+        <span class="playback-frame-time">${m}:${sec}</span>
+        <span class="playback-frame-chars">${(s.content||'').length}자 · ${label}</span>
+      </div>
+      <div class="playback-frame-title">${escHtml(s.title || '(제목 없음)')}</div>
+      <div class="playback-frame-body">${escHtml(s.content || '(내용 없음)')}</div>
+    </div>`;
+  }).join('');
+}
+
+function initDragScroll(el) {
+  if (!el || el._dragBound) return;
+  el._dragBound = true;
+  let isDown = false, startX, scrollLeft;
+  el.addEventListener('mousedown', e => { isDown = true; startX = e.pageX - el.offsetLeft; scrollLeft = el.scrollLeft; });
+  el.addEventListener('mouseleave', () => { isDown = false; });
+  el.addEventListener('mouseup', () => { isDown = false; });
+  el.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    e.preventDefault();
+    el.scrollLeft = scrollLeft - (e.pageX - el.offsetLeft - startX);
+  });
+}
+
 function backToDash() {
   clearInterval(state.detailPollId);
+  _playbackOpen = false;
+  _playbackData = [];
+  document.getElementById('playback-section').style.display = 'none';
+  document.getElementById('final-content-section').style.display = 'block';
+  document.getElementById('btn-playback').textContent = '⏪ 타이핑 보기';
   showView('dash');
 }
 

@@ -68,10 +68,19 @@ export async function onRequest(context) {
       const newPaste  = data.pasteLog ?? [];
       const merged    = mergePasteLog(prevPaste, newPaste);
 
+      // 스냅샷 누적 (data.snapshot을 snapshots 배열에 추가)
+      const prevSnapshots = prev.snapshots ?? [];
+      const newSnapshot   = data.snapshot ?? null;
+      const snapshots     = newSnapshot
+        ? [...prevSnapshots, newSnapshot]
+        : prevSnapshots;
+
+      const { snapshot: _drop, ...dataWithoutSnapshot } = data;
       const record = {
         ...prev,
-        ...data,
+        ...dataWithoutSnapshot,
         pasteLog:    merged,
+        snapshots,
         lastSaved:   new Date().toISOString(),
         submitted:   prev.submitted   ?? false,
         submittedAt: prev.submittedAt ?? null,
